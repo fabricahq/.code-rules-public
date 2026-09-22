@@ -75,6 +75,6 @@ Maintainers review changes through pull requests and publish version tags for ap
 
 ## License and sources
 
-The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica. Selected rules are public adaptations of Josh Padnick's engineering rule collection. Some also draw on mkosir's TypeScript Style Guide.
+The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Selected rules are public adaptations of Josh Padnick's engineering rule collection. Some also draw on mkosir's TypeScript Style Guide.
 
 Per-rule metadata records source revisions and adaptations. [NOTICE.md](NOTICE.md) preserves the upstream notices; some original source links may require repository access.
