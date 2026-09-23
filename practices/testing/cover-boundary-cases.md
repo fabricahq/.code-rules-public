@@ -8,32 +8,94 @@ tags: "testing"
 
 ## Cover empty inputs and boundaries
 
-Test each input the contract treats differently: empty and single-item collections, first and last positions, exact thresholds, and an item related to itself. Assert the intended result for each case.
+Test each input the contract treats differently, and assert the intended result for each one.
+These inputs include empty and single-item collections, first and last positions, exact thresholds, and an item related to itself.
 
-Bugs often cluster at these edges because each one takes a different path through the code. Edge cases fail in three ways: a crash, a misleading error, or a silently wrong result. A test that only checks for "no crash" misses the last two.
+### Implementation
 
-Cover each boundary at the lowest test layer that can prove it, usually a unit test. Do not repeat edge-case variants in UI or end-to-end tests unless the boundary exists only at that layer. Keep each case cheap: a table-driven or parameterized test can hold one row per boundary. Be most thorough where a wrong edge result loses or corrupts data.
+Look for cases in three places:
 
-**Incomplete:** a function accepts retry counts from 1 through 3, and the only test uses 2.
+- **Collections:** empty and single-item inputs.
+  An empty input often means there is nothing to loop over or renumber, and a single item skips the logic that runs between items.
+- **Positions and thresholds:** the first slot, the last slot, and the values just on each side of every threshold.
+- **Relationships:** the same item on both sides, and a missing counterpart, such as a root item that has no parent.
 
-**Complete:** tests for 0, 1, 3, and 4, each asserting the documented acceptance or error. 1 and 3 prove the inclusive bounds, and 0 and 4 prove the rejections. 2 sits inside the documented range, so it proves nothing 1 and 3 do not.
+Use the implementation to find boundaries the contract leaves implicit, but choose and assert cases through the interface callers use.
+When an edge case shows that the contract never decided the result, decide it, write the answer into the contract, enforce it in the implementation, and test that enforcement.
 
-**Incomplete:** a function that moves an item before a target item in a list is tested only by reordering three distinct items.
+Cover each boundary at the lowest test layer that can prove it, usually a unit test.
+Do not repeat edge-case variants in UI or end-to-end tests unless the boundary exists only at that layer.
+Keep each case cheap: a table-driven or parameterized test can hold one row per boundary.
+Be most thorough where a wrong edge result loses or corrupts data.
 
-**Complete:** also move an item before itself, move the only item in a list, and move items to the first and last positions. If the function removes the item before looking up the target, moving an item before itself fails with a misleading "target not found" error that the three-item test never reaches.
+Add a case for each distinct behavior, not for every possible input.
+An input needs no separate test when it takes the same path as a tested case, or when the contract or type system rules it out, such as an empty list passed to a function that only accepts a non-empty type.
 
-Where to look for cases:
+When an edge-case bug gets past the tests, reproduce it with a failing test before fixing it, and keep that test.
 
-- **Collections:** empty and single-item inputs. An empty input often means there is nothing to loop over or renumber, and a single item skips the logic that runs between items.
-- **Positions and thresholds:** the first slot, the last slot, and the values just on each side of every threshold. This is where `<` versus `<=` mistakes hide.
-- **Relationships:** the same item on both sides, and a missing counterpart. For "is folder A inside folder B," test A inside A, and a root folder that has no parent.
+### Rationale
 
-**When the intended result is unclear:** edge cases often show that the contract never decided. Is a folder inside itself? Decide, write the answer into the function's contract, enforce it in the implementation, and write a test that checks that enforcement.
+Bugs often cluster at these edges because each one takes a different path through the code.
+Edge cases fail in three ways: a crash, a misleading error, or a silently wrong result.
+A test that only checks for "no crash" misses the last two, and a suite that only uses ordinary inputs never reaches the edge paths at all.
+Asserting through the caller-facing contract, rather than the current implementation's branches, keeps these tests valid when the implementation is refactored.
+
+### Examples
+
+These examples describe tests in prose because the practice applies in any language.
+
+#### Application: A range with inclusive bounds
+
+A function accepts retry counts from 1 through 3 and rejects other counts with a documented error.
+
+**Incorrect (counterexample):**
+
+The only test uses a count of 2 and asserts that it is accepted.
+The test still passes if the upper check is written as `count < 3`, which wrongly rejects 3, or the lower check as `count >= 0`, which wrongly accepts 0.
+
+**Correct:**
+
+Test 0, 1, 3, and 4, and assert the documented acceptance or error for each.
+1 and 3 prove the inclusive bounds, and 0 and 4 prove the rejections.
+
+A suite that already covers 0, 1, 3, and 4 does not need a test for 2.
+It sits inside the tested bounds and takes the same path, so it would catch no additional regression.
+
+#### Application: An item related to itself
+
+A function moves an item to just before a target item in a list.
+
+**Incorrect (counterexample):**
+
+The tests only reorder three distinct items.
+If the function removes the moved item before looking up the target, moving an item before itself fails with a misleading "target not found" error, and no test reaches that path.
+
+**Correct:**
+
+Also move an item before itself and assert the documented result, such as an unchanged list.
+Move the only item in a list, and move items to the first and last positions.
+
+#### Application: A contract that never decided the edge
+
+A function answers whether folder A is inside folder B, and its documentation does not say whether a folder is inside itself.
+
+**Incorrect (counterexample):**
+
+A test for A inside A asserts whatever the implementation happens to return.
+The test locks in an accident: a later change that "fixes" the answer breaks the test, and nobody can tell which result callers depend on.
+
+**Correct:**
+
+Decide the answer from what callers need.
+For example, if callers use the answer to reject moving a folder into its own subtree, A must count as inside A.
+Document that result, enforce it in the implementation, and assert it in the test.
 
 ### Validation
 
-List the boundaries the contract defines and match each one to a test that asserts the intended result. Use the implementation to find boundaries the contract leaves implicit, but choose and assert cases through the interface callers use, so that refactoring the implementation does not break the tests.
+Before judging coverage, read the contract: the documentation, types, and input validation of the code under test.
+List the boundaries it defines and match each one to a test that asserts the intended result, not only the absence of a crash.
 
-A missing case is not a gap when it takes the same path as a tested case, such as another value inside a range whose bounds are already tested. It is also not a gap when the contract or type system rules the input out, such as an empty list passed to a function that only accepts a non-empty type.
+To confirm that a boundary test works, change the comparison at that boundary in a disposable checkout, such as `<=` to `<`.
+The test should fail.
 
-When an edge-case bug gets past the tests, reproduce it with a failing test before fixing it, and keep that test.
+A missing case is not a violation when it takes the same path as a tested case, or when the contract or type system rules the input out.
