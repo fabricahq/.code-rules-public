@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Each boolean mode prop multiplies the combinations a component must handle, including impossible ones, and buries each variant in conditionals."
 tags: "react, composition, components, props"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/architecture-avoid-boolean-props.md
-    description: "Adapted from the Vercel Agent Skills rule architecture-avoid-boolean-props: merged two overlapping rules on boolean props and explicit variants, restructured to the rule template, and recalibrated impact."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/patterns-explicit-variants.md
-    description: "Adapted from the Vercel Agent Skills rule patterns-explicit-variants: merged two overlapping rules on boolean props and explicit variants, restructured to the rule template, and recalibrated impact."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules
+    description: "Adapted from two Vercel Agent Skills rules (architecture-avoid-boolean-props and patterns-explicit-variants): merged two overlapping rules on boolean props and explicit variants, restructured to the rule template, and recalibrated impact."
 ---
 
 ## Create explicit component variants instead of boolean mode props

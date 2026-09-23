@@ -5,10 +5,8 @@ impact: "HIGH"
 impactDescription: "Search params come from the URL and can hold anything, so unvalidated reads produce NaN, invalid options, and runtime errors from edited or outdated links."
 tags: "tanstack-router, search-params, validation, zod"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/search-validation.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule search-validation (MIT, notice retained in NOTICE.md): merged the custom-serializer rule, restructured to the rule template, corrected the serializer API to parseSearch and stringifySearch, and fixed a manual validator that turned zero into undefined."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/search-custom-serializer.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule search-custom-serializer (MIT, notice retained in NOTICE.md): merged the custom-serializer rule, restructured to the rule template, corrected the serializer API to parseSearch and stringifySearch, and fixed a manual validator that turned zero into undefined."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (search-validation and search-custom-serializer; MIT, notice retained in NOTICE.md): merged the custom-serializer rule, restructured to the rule template, corrected the serializer API to parseSearch and stringifySearch, and fixed a manual validator that turned zero into undefined."
 ---
 
 ## Validate search params with defaults at the route

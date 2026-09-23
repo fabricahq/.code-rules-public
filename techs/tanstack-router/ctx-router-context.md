@@ -5,10 +5,8 @@ impact: "HIGH"
 impactDescription: "Loaders that import module-level singletons share state across server requests and cannot be given test doubles."
 tags: "tanstack-router, context, dependency-injection, ssr, tanstack-query"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/ctx-root-context.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule ctx-root-context (MIT, notice retained in NOTICE.md): merged the root-context and QueryClient-context rules, restructured to the rule template, and removed a test example that ignored its route argument."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-integration/rules/setup-query-client-context.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule setup-query-client-context (MIT, notice retained in NOTICE.md): merged the root-context and QueryClient-context rules, restructured to the rule template, and removed a test example that ignored its route argument."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (ctx-root-context and setup-query-client-context; MIT, notice retained in NOTICE.md): merged the root-context and QueryClient-context rules, restructured to the rule template, and removed a test example that ignored its route argument."
 ---
 
 ## Provide shared dependencies through typed router context

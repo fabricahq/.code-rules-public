@@ -5,12 +5,8 @@ impact: "MEDIUM"
 impactDescription: "State trapped inside one component forces siblings to sync through Effects or refs, and UI coupled to one state source cannot be reused with another."
 tags: "react, state, context, providers, composition"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/state-lift-state.md
-    description: "Adapted from the Vercel Agent Skills rule state-lift-state: merged three overlapping rules on lifting state, generic context interfaces, and decoupling state from UI, and restructured to the rule template."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/state-context-interface.md
-    description: "Adapted from the Vercel Agent Skills rule state-context-interface: merged three overlapping rules on lifting state, generic context interfaces, and decoupling state from UI, and restructured to the rule template."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/state-decouple-implementation.md
-    description: "Adapted from the Vercel Agent Skills rule state-decouple-implementation: merged three overlapping rules on lifting state, generic context interfaces, and decoupling state from UI, and restructured to the rule template."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules
+    description: "Adapted from three Vercel Agent Skills rules (state-lift-state, state-context-interface, and state-decouple-implementation): merged three overlapping rules on lifting state, generic context interfaces, and decoupling state from UI, and restructured to the rule template."
 ---
 
 ## Lift shared component state into a provider behind an interface

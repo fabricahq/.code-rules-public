@@ -5,12 +5,8 @@ impact: "HIGH"
 impactDescription: "Heavy code that most visits never use enlarges the initial bundle and delays the first interaction for every user."
 tags: "react, bundling, code-splitting, lazy, dynamic-import"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/bundle-dynamic-imports.md
-    description: "Adapted from the Vercel Agent Skills rule bundle-dynamic-imports: merged three rules on dynamic imports, conditional loading, and intent-based preloading, restructured to the rule template, and recalibrated impact."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/bundle-conditional.md
-    description: "Adapted from the Vercel Agent Skills rule bundle-conditional: merged three rules on dynamic imports, conditional loading, and intent-based preloading, restructured to the rule template, and recalibrated impact."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/bundle-preload.md
-    description: "Adapted from the Vercel Agent Skills rule bundle-preload: merged three rules on dynamic imports, conditional loading, and intent-based preloading, restructured to the rule template, and recalibrated impact."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from three Vercel Agent Skills rules (bundle-dynamic-imports, bundle-conditional, and bundle-preload): merged three rules on dynamic imports, conditional loading, and intent-based preloading, restructured to the rule template, and recalibrated impact."
 ---
 
 ## Load heavy optional code on demand

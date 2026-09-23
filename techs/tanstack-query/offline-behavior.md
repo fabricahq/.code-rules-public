@@ -5,10 +5,8 @@ impact: "LOW-MEDIUM"
 impactDescription: "Queries and mutations pause silently while offline, and a persisted cache without versioning or filtering can restore outdated or sensitive data."
 tags: "tanstack-query, offline, networkMode, persistence"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/network-mode.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule network-mode (MIT, notice retained in NOTICE.md): merged the network-mode and persistence rules into one offline rule, restructured to the rule template, and replaced APIs that do not exist with useIsRestoring and the async storage persister."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/persist-queries.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule persist-queries (MIT, notice retained in NOTICE.md): merged the network-mode and persistence rules into one offline rule, restructured to the rule template, and replaced APIs that do not exist with useIsRestoring and the async storage persister."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (network-mode and persist-queries; MIT, notice retained in NOTICE.md): merged the network-mode and persistence rules into one offline rule, restructured to the rule template, and replaced APIs that do not exist with useIsRestoring and the async storage persister."
 ---
 
 ## Make offline behavior explicit

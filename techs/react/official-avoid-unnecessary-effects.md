@@ -7,10 +7,8 @@ tags: "react, effects, derived-state, events"
 attribution:
   - url: https://react.dev/learn/you-might-not-need-an-effect
     description: "Official React documentation paraphrased in the source rule; merged with the related derived-state and event-handler rules and restructured to the rule template."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-derived-state-no-effect.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-derived-state-no-effect: merged with the related derived-state and event-handler rules and restructured to the rule template."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-move-effect-to-event.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-move-effect-to-event: merged with the related derived-state and event-handler rules and restructured to the rule template."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from two Vercel Agent Skills rules (rerender-derived-state-no-effect and rerender-move-effect-to-event): merged with the related derived-state and event-handler rules and restructured to the rule template."
 ---
 
 ## Avoid unnecessary Effects

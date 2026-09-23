@@ -5,10 +5,8 @@ impact: "MEDIUM-HIGH"
 impactDescription: "Scripts that block parsing or ship in the initial bundle delay rendering and interactivity for work the user does not need yet."
 tags: "react, scripts, third-party, performance, nextjs"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/bundle-defer-third-party.md
-    description: "Adapted from the Vercel Agent Skills rule bundle-defer-third-party: merged two rules on third-party libraries and script loading attributes, restructured to the rule template, and corrected the Next.js example so ssr false is used only in a Client Component."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-script-defer-async.md
-    description: "Adapted from the Vercel Agent Skills rule rendering-script-defer-async: merged two rules on third-party libraries and script loading attributes, restructured to the rule template, and corrected the Next.js example so ssr false is used only in a Client Component."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from two Vercel Agent Skills rules (bundle-defer-third-party and rendering-script-defer-async): merged two rules on third-party libraries and script loading attributes, restructured to the rule template, and corrected the Next.js example so ssr false is used only in a Client Component."
 ---
 
 ## Keep non-critical scripts off the critical path

@@ -5,10 +5,8 @@ impact: "HIGH"
 impactDescription: "Cached queries that a mutation changed but did not invalidate keep showing outdated data until something else refetches them."
 tags: "tanstack-query, mutations, invalidation, cache"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-invalidate-queries.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule mut-invalidate-queries (MIT, notice retained in NOTICE.md): merged the targeted-invalidation rule, restructured to the rule template, and corrected when invalidation refetches."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-invalidation.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-invalidation (MIT, notice retained in NOTICE.md): merged the targeted-invalidation rule, restructured to the rule template, and corrected when invalidation refetches."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (mut-invalidate-queries and cache-invalidation; MIT, notice retained in NOTICE.md): merged the targeted-invalidation rule, restructured to the rule template, and corrected when invalidation refetches."
 ---
 
 ## Invalidate or update every query a mutation changes

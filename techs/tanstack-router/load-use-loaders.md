@@ -5,10 +5,8 @@ impact: "HIGH"
 impactDescription: "Fetching in components or in beforeLoad starts requests late or in sequence, which adds loading states and waterfalls to every navigation."
 tags: "tanstack-router, loaders, beforeLoad, data-loading, waterfalls"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-use-loaders.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule load-use-loaders (MIT, notice retained in NOTICE.md): merged the parallel-loading rule, restructured to the rule template, and corrected the claim that child loaders wait for parent loaders."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-parallel.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule load-parallel (MIT, notice retained in NOTICE.md): merged the parallel-loading rule, restructured to the rule template, and corrected the claim that child loaders wait for parent loaders."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (load-use-loaders and load-parallel; MIT, notice retained in NOTICE.md): merged the parallel-loading rule, restructured to the rule template, and corrected the claim that child loaders wait for parent loaders."
 ---
 
 ## Load route data in loaders, in parallel

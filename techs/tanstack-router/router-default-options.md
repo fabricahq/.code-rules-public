@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Without router defaults, every navigation waits for data after the click, unexpected errors and unknown URLs fall back to bare built-in screens, and back navigation loses scroll position."
 tags: "tanstack-router, createRouter, preload, errors, scroll-restoration"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/router-default-options.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule router-default-options (MIT, notice retained in NOTICE.md): merged the intent-preloading rule, restructured to the rule template, removed an incorrect structural sharing default, and added the Query error reset to the retry example."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/preload-intent.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule preload-intent (MIT, notice retained in NOTICE.md): merged the intent-preloading rule, restructured to the rule template, removed an incorrect structural sharing default, and added the Query error reset to the retry example."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (router-default-options and preload-intent; MIT, notice retained in NOTICE.md): merged the intent-preloading rule, restructured to the rule template, removed an incorrect structural sharing default, and added the Query error reset to the retry example."
 ---
 
 ## Set app-wide navigation behavior in router defaults

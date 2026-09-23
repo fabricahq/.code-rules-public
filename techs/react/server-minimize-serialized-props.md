@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Every prop crossing the server-client boundary is serialized into the page, so unused fields and duplicate copies increase page weight and load time."
 tags: "react, server-components, serialization, performance"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-serialization.md
-    description: "Adapted from the Vercel Agent Skills rule server-serialization: merged two rules on serialization size and duplicate props, restructured to the rule template, and recalibrated impact."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-dedup-props.md
-    description: "Adapted from the Vercel Agent Skills rule server-dedup-props: merged two rules on serialization size and duplicate props, restructured to the rule template, and recalibrated impact."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from two Vercel Agent Skills rules (server-serialization and server-dedup-props): merged two rules on serialization size and duplicate props, restructured to the rule template, and recalibrated impact."
 ---
 
 ## Pass only the data Client Components use

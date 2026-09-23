@@ -5,14 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Memoization in the wrong place costs more than it saves, and small mistakes silently disable the memoization that matters."
 tags: "react, memo, useMemo, performance"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-memo.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-memo: merged four memoization rules into one rule with applications, restructured to the rule template, and scoped it to projects without React Compiler."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-memo-with-default-value.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-memo-with-default-value: merged four memoization rules into one rule with applications, restructured to the rule template, and scoped it to projects without React Compiler."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-simple-expression-in-memo.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-simple-expression-in-memo: merged four memoization rules into one rule with applications, restructured to the rule template, and scoped it to projects without React Compiler."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-split-combined-hooks.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-split-combined-hooks: merged four memoization rules into one rule with applications, restructured to the rule template, and scoped it to projects without React Compiler."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from four Vercel Agent Skills rules (rerender-memo, rerender-memo-with-default-value, rerender-simple-expression-in-memo, and rerender-split-combined-hooks): merged four memoization rules into one rule with applications, restructured to the rule template, and scoped it to projects without React Compiler."
 ---
 
 ## Memoize deliberately

@@ -5,12 +5,8 @@ impact: "HIGH"
 impactDescription: "A key that omits an input makes different requests share one cache entry, so users see another input's data and changes do not refetch."
 tags: "tanstack-query, query-keys, cache"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-include-dependencies.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-include-dependencies (MIT, notice retained in NOTICE.md): merged the array-key and serializable-key rules, restructured to the rule template, and corrected the serialization details against the query-core key hashing."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-serializable.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-serializable (MIT, notice retained in NOTICE.md): merged the array-key and serializable-key rules, restructured to the rule template, and corrected the serialization details against the query-core key hashing."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-array-structure.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-array-structure (MIT, notice retained in NOTICE.md): merged the array-key and serializable-key rules, restructured to the rule template, and corrected the serialization details against the query-core key hashing."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules
+    description: "Adapted from three rules in Deckard Gerritsen's TanStack Agent Skills (qk-include-dependencies, qk-serializable, and qk-array-structure; MIT, notice retained in NOTICE.md): merged the array-key and serializable-key rules, restructured to the rule template, and corrected the serialization details against the query-core key hashing."
 ---
 
 ## Key each query by every input it uses

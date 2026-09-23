@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Monolithic components configured through flags and render props grow a prop for every new arrangement and are hard for callers to read."
 tags: "react, composition, compound-components, children"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/architecture-compound-components.md
-    description: "Adapted from the Vercel Agent Skills rule architecture-compound-components: merged with the children-over-render-props rule, restructured to the rule template, and recalibrated impact."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules/patterns-children-over-render-props.md
-    description: "Adapted from the Vercel Agent Skills rule patterns-children-over-render-props: merged with the children-over-render-props rule, restructured to the rule template, and recalibrated impact."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/composition-patterns/rules
+    description: "Adapted from two Vercel Agent Skills rules (architecture-compound-components and patterns-children-over-render-props): merged with the children-over-render-props rule, restructured to the rule template, and recalibrated impact."
 ---
 
 ## Build complex components from composable parts

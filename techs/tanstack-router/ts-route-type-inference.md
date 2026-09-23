@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Without router registration and route-specific hooks, invalid routes, missing params, and wrong search param types are not caught by TypeScript."
 tags: "tanstack-router, typescript, type-safety, Register"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/ts-register-router.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule ts-register-router (MIT, notice retained in NOTICE.md): merged the router registration and from-parameter rules, restructured to the rule template, and corrected the counterexample, since hooks without from or strict false do not compile."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/ts-use-from-param.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule ts-use-from-param (MIT, notice retained in NOTICE.md): merged the router registration and from-parameter rules, restructured to the rule template, and corrected the counterexample, since hooks without from or strict false do not compile."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (ts-register-router and ts-use-from-param; MIT, notice retained in NOTICE.md): merged the router registration and from-parameter rules, restructured to the rule template, and corrected the counterexample, since hooks without from or strict false do not compile."
 ---
 
 ## Register the router and read route data through typed route APIs

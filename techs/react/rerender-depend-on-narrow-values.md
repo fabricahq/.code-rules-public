@@ -5,12 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Subscribing to or depending on broader values than a component uses re-renders it or re-runs its Effects on changes that do not matter."
 tags: "react, subscriptions, dependencies, rerender"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-derived-state.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-derived-state: merged three rules on derived subscriptions, deferred reads, and narrow Effect dependencies, and restructured to the rule template."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-defer-reads.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-defer-reads: merged three rules on derived subscriptions, deferred reads, and narrow Effect dependencies, and restructured to the rule template."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-dependencies.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-dependencies: merged three rules on derived subscriptions, deferred reads, and narrow Effect dependencies, and restructured to the rule template."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from three Vercel Agent Skills rules (rerender-derived-state, rerender-defer-reads, and rerender-dependencies): merged three rules on derived subscriptions, deferred reads, and narrow Effect dependencies, and restructured to the rule template."
 ---
 
 ## Subscribe to and depend on only the values you use

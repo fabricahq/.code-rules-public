@@ -5,12 +5,8 @@ impact: "HIGH"
 impactDescription: "Returning data from loaders alongside Query hooks creates two caches that disagree, and misusing prefetchQuery lets routes render before their data is ready."
 tags: "tanstack-router, tanstack-query, loaders, ensureQueryData, cache"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-integration/rules/flow-loader-query-pattern.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule flow-loader-query-pattern (MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-ensure-query-data.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule load-ensure-query-data (MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-integration/rules/cache-single-source.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-single-source (MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills
+    description: "Adapted from three rules in Deckard Gerritsen's TanStack Agent Skills (flow-loader-query-pattern, load-ensure-query-data, and cache-single-source; MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
 ---
 
 ## With TanStack Query, load route data into the Query cache

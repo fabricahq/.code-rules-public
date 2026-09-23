@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "The default staleTime of zero refetches data on every mount and window focus, while an overly long staleTime shows outdated data."
 tags: "tanstack-query, cache, staleTime, gcTime"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-stale-time.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-stale-time (MIT, notice retained in NOTICE.md): merged the gcTime rule, restructured to the rule template, and labeled suggested durations as starting points."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-gc-time.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-gc-time (MIT, notice retained in NOTICE.md): merged the gcTime rule, restructured to the rule template, and labeled suggested durations as starting points."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (cache-stale-time and cache-gc-time; MIT, notice retained in NOTICE.md): merged the gcTime rule, restructured to the rule template, and labeled suggested durations as starting points."
 ---
 
 ## Set staleTime from how fast data changes

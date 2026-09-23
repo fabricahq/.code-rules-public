@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Route components bundled together load every page's code, including heavy libraries, before the first page is interactive."
 tags: "tanstack-router, code-splitting, lazy, bundling"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/split-lazy-routes.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule split-lazy-routes (MIT, notice retained in NOTICE.md): merged the virtual-routes rule, restructured to the rule template, made automatic code splitting the primary approach, and updated the deprecated plugin export."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/org-virtual-routes.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule org-virtual-routes (MIT, notice retained in NOTICE.md): merged the virtual-routes rule, restructured to the rule template, made automatic code splitting the primary approach, and updated the deprecated plugin export."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (split-lazy-routes and org-virtual-routes; MIT, notice retained in NOTICE.md): merged the virtual-routes rule, restructured to the rule template, made automatic code splitting the primary approach, and updated the deprecated plugin export."
 ---
 
 ## Split route components out of the main bundle

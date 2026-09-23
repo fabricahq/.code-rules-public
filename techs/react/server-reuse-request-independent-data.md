@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Reloading identical data on every request adds latency and load, while caching the wrong data across requests leaks it between users."
 tags: "react, server, caching, nextjs"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-hoist-static-io.md
-    description: "Adapted from the Vercel Agent Skills rule server-hoist-static-io: merged two rules on module-level static I/O and cross-request LRU caches, restructured to the rule template, and added failure handling for module-level promises."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-cache-lru.md
-    description: "Adapted from the Vercel Agent Skills rule server-cache-lru: merged two rules on module-level static I/O and cross-request LRU caches, restructured to the rule template, and added failure handling for module-level promises."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from two Vercel Agent Skills rules (server-hoist-static-io and server-cache-lru): merged two rules on module-level static I/O and cross-request LRU caches, restructured to the rule template, and added failure handling for module-level promises."
 ---
 
 ## Reuse request-independent server data across requests

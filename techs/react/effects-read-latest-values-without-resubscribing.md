@@ -5,12 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Listing a changing callback as an Effect dependency tears down and recreates the subscription on every render, while omitting it reads stale values."
 tags: "react, effects, useEffectEvent, refs, subscriptions"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/advanced-use-latest.md
-    description: "Adapted from the Vercel Agent Skills rule advanced-use-latest: merged three related rules on Effect Events and callback refs, restructured to the rule template, and aligned with the documented useEffectEvent caveats."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/advanced-event-handler-refs.md
-    description: "Adapted from the Vercel Agent Skills rule advanced-event-handler-refs: merged three related rules on Effect Events and callback refs, restructured to the rule template, and aligned with the documented useEffectEvent caveats."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/advanced-effect-event-deps.md
-    description: "Adapted from the Vercel Agent Skills rule advanced-effect-event-deps: merged three related rules on Effect Events and callback refs, restructured to the rule template, and aligned with the documented useEffectEvent caveats."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from three Vercel Agent Skills rules (advanced-use-latest, advanced-event-handler-refs, and advanced-effect-event-deps): merged three related rules on Effect Events and callback refs, restructured to the rule template, and aligned with the documented useEffectEvent caveats."
 ---
 
 ## Read the latest callbacks in Effects without resubscribing

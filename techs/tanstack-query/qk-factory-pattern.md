@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Keys written by hand in many places drift apart, so invalidation and prefetching miss entries that were meant to match."
 tags: "tanstack-query, query-keys, queryOptions, invalidation"
 attribution:
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-factory-pattern.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-factory-pattern (MIT, notice retained in NOTICE.md): merged the hierarchical-organization rule, restructured to the rule template, and made queryOptions factories the primary pattern."
-  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-hierarchical-organization.md
-    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-hierarchical-organization (MIT, notice retained in NOTICE.md): merged the hierarchical-organization rule, restructured to the rule template, and made queryOptions factories the primary pattern."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/tree/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules
+    description: "Adapted from two rules in Deckard Gerritsen's TanStack Agent Skills (qk-factory-pattern and qk-hierarchical-organization; MIT, notice retained in NOTICE.md): merged the hierarchical-organization rule, restructured to the rule template, and made queryOptions factories the primary pattern."
 ---
 
 ## Define hierarchical query keys and options in factories

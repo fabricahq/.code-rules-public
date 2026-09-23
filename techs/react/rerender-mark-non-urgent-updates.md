@@ -5,12 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Rendering expensive updates at the same priority as typing makes input lag, and hand-written loading flags drift from the actual work."
 tags: "react, transitions, useTransition, useDeferredValue, concurrency"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-transitions.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-transitions: merged three rules on transitions, deferred values, and transition-based loading state; restructured to the rule template; and corrected the async transition example to wrap updates after await."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-use-deferred-value.md
-    description: "Adapted from the Vercel Agent Skills rule rerender-use-deferred-value: merged three rules on transitions, deferred values, and transition-based loading state; restructured to the rule template; and corrected the async transition example to wrap updates after await."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-usetransition-loading.md
-    description: "Adapted from the Vercel Agent Skills rule rendering-usetransition-loading: merged three rules on transitions, deferred values, and transition-based loading state; restructured to the rule template; and corrected the async transition example to wrap updates after await."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from three Vercel Agent Skills rules (rerender-transitions, rerender-use-deferred-value, and rendering-usetransition-loading): merged three rules on transitions, deferred values, and transition-based loading state; restructured to the rule template; and corrected the async transition example to wrap updates after await."
 ---
 
 ## Keep input responsive by marking non-urgent updates

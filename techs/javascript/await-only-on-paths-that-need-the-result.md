@@ -5,10 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Awaiting a result before a branch that may not use it adds that operation's latency and cost to every path."
 tags: "javascript, async, latency, branching"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-defer-await.md
-    description: "Adapted from the Vercel Agent Skills rule async-defer-await: merged two rules on deferring await and checking cheap conditions first, restructured to the rule template, and added the rule that authorization checks keep their order."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-cheap-condition-before-await.md
-    description: "Adapted from the Vercel Agent Skills rule async-cheap-condition-before-await: merged two rules on deferring await and checking cheap conditions first, restructured to the rule template, and added the rule that authorization checks keep their order."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from two Vercel Agent Skills rules (async-defer-await and async-cheap-condition-before-await): merged two rules on deferring await and checking cheap conditions first, restructured to the rule template, and added the rule that authorization checks keep their order."
 ---
 
 ## Await only on paths that need the result

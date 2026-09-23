@@ -5,14 +5,8 @@ impact: "HIGH"
 impactDescription: "Awaiting independent operations one after another adds their latencies together instead of overlapping them."
 tags: "javascript, async, promises, concurrency, latency"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-parallel.md
-    description: "Adapted from the Vercel Agent Skills rule async-parallel: merged four rules on Promise.all, API route waterfalls, dependency-based parallelization, and nested fetching; restructured to the rule template; and added failure, rejection, and concurrency-limit guidance."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-api-routes.md
-    description: "Adapted from the Vercel Agent Skills rule async-api-routes: merged four rules on Promise.all, API route waterfalls, dependency-based parallelization, and nested fetching; restructured to the rule template; and added failure, rejection, and concurrency-limit guidance."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-dependencies.md
-    description: "Adapted from the Vercel Agent Skills rule async-dependencies: merged four rules on Promise.all, API route waterfalls, dependency-based parallelization, and nested fetching; restructured to the rule template; and added failure, rejection, and concurrency-limit guidance."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-parallel-nested-fetching.md
-    description: "Adapted from the Vercel Agent Skills rule server-parallel-nested-fetching: merged four rules on Promise.all, API route waterfalls, dependency-based parallelization, and nested fetching; restructured to the rule template; and added failure, rejection, and concurrency-limit guidance."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from four Vercel Agent Skills rules (async-parallel, async-api-routes, async-dependencies, and server-parallel-nested-fetching): merged four rules on Promise.all, API route waterfalls, dependency-based parallelization, and nested fetching; restructured to the rule template; and added failure, rejection, and concurrency-limit guidance."
 ---
 
 ## Start independent asynchronous work concurrently
