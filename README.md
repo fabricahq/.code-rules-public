@@ -33,7 +33,7 @@ techs/                   Guidance for a specific technology
   typescript/
 ```
 
-Each group includes `_group.yaml` metadata, a README, and one Markdown file per rule. For format details, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
+Each group includes `_group.yaml` metadata and one Markdown file per rule. For format details, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
 ## Use the library
 
