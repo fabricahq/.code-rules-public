@@ -27,9 +27,9 @@ Giving an agent a rule does not guarantee compliance. Ask your agent to read the
 | [TanStack Query](techs/tanstack-query/) | 15 | Manage query keys, caching, mutations, and hydration |
 | [TanStack Router](techs/tanstack-router/) | 10 | Structure routes, validate inputs, and coordinate data loading |
 | [TypeScript](techs/typescript/) | 33 | Model data, preserve contracts, and keep code understandable |
-| [Zustand](techs/zustand/) | 11 | Design stores, subscriptions, and persistence |
+| [Zustand](techs/zustand/) | 10 | Design stores, subscriptions, and persistence |
 
-The 131 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
+The 130 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
 
 Practice groups apply across languages. Their TypeScript examples illustrate the ideas; they do not limit those practices to TypeScript projects.
 
