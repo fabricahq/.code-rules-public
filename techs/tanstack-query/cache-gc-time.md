@@ -1,0 +1,102 @@
+---
+title: "cache-gc-time: Configure gcTime for Inactive Query Retention"
+whenToRead: "Before choosing how long inactive TanStack Query results remain cached, especially for frequently revisited routes, large results, or SSR hydration."
+impact: "MEDIUM"
+impactDescription: "keeps inactive query data available for likely return navigation without unbounded cache growth"
+tags: "tanstack-query, cache, gc-time, cache-time, memory"
+attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-gc-time.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/cache-gc-time.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+---
+
+## cache-gc-time: Configure gcTime for Inactive Query Retention
+
+## Explanation
+
+`gcTime` (garbage collection time, formerly `cacheTime`) controls how long inactive queries remain in the cache before being garbage collected. Default is 5 minutes. Configure based on your navigation patterns and memory constraints.
+
+## Bad Example
+
+```tsx
+// Not considering gcTime for frequently revisited pages
+const { data } = useQuery({
+  queryKey: ['dashboard-stats'],
+  queryFn: fetchDashboardStats,
+  // Default gcTime of 5 minutes - might be too short for frequently revisited data
+})
+
+// Setting gcTime too high without consideration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: Infinity,  // Never garbage collect - potential memory leak
+    },
+  },
+})
+
+// Setting gcTime to 0 - cache is immediately removed
+const { data } = useQuery({
+  queryKey: ['user-data'],
+  queryFn: fetchUserData,
+  gcTime: 0,  // Loses cache benefits entirely
+})
+```
+
+## Good Example
+
+```tsx
+// Longer gcTime for frequently revisited data
+const { data } = useQuery({
+  queryKey: ['dashboard-stats'],
+  queryFn: fetchDashboardStats,
+  gcTime: 30 * 60 * 1000,  // 30 minutes - user returns to dashboard often
+})
+
+// Shorter gcTime for rarely revisited large data
+const { data: report } = useQuery({
+  queryKey: ['detailed-report', reportId],
+  queryFn: () => fetchReport(reportId),
+  gcTime: 2 * 60 * 1000,  // 2 minutes - large payload, viewed once
+})
+
+// Sensible default with query-specific overrides
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 10 * 60 * 1000,  // 10 minutes default
+    },
+  },
+})
+```
+
+## Understanding gcTime vs staleTime
+
+```
+Query Mount -> Data Fresh (staleTime) -> Data Stale -> Query Unmount -> gcTime countdown -> Garbage Collected
+
+Timeline example (staleTime: 1min, gcTime: 5min):
+0:00 - Query mounts, fetches data
+0:00-1:00 - Data is fresh (no background refetch)
+1:00+ - Data is stale (background refetch on new mount)
+5:00 - User navigates away, query unmounts
+5:00-10:00 - Data in cache but inactive (gcTime countdown)
+10:00 - Data garbage collected (next mount = full loading state)
+```
+
+## Recommended gcTime Values
+
+| Scenario | gcTime | Rationale |
+|----------|--------|-----------|
+| Frequently revisited routes | 15 - 30min | Instant navigation |
+| Detail pages (viewed once) | 2 - 5min | Memory efficient |
+| Large payloads | 1 - 2min | Prevent memory bloat |
+| Critical user data | 30min+ | Offline-like experience |
+| SSR hydration | >= 2s | Prevent hydration issues |
+
+## Context
+
+- gcTime countdown starts when ALL query observers unmount
+- Remounting before gcTime expires returns cached data instantly
+- Setting gcTime < staleTime is rarely useful
+- For SSR, avoid gcTime: 0 (use minimum 2000ms to allow hydration)
+- Monitor memory usage in long-running applications
+
+Source: [TanStack Agent Skills - tanstack-query/cache-gc-time.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-gc-time.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).

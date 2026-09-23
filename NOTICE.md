@@ -55,3 +55,31 @@ SOFTWARE.
 ## React documentation references
 
 The `official-*` React rules express documented React behavior in their own wording and examples, with links to the relevant official pages. The React documentation itself is licensed under [CC BY 4.0](https://github.com/reactjs/react.dev/blob/main/LICENSE-DOCS.md); this library's MIT declaration does not relicense that documentation. Other React rules retain their cited documentation references.
+
+## TanStack Agent Skills
+
+TanStack Query and TanStack Router rules include adaptations of Deckard Gerritsen's TanStack Agent Skills at commit `0e8bcdc6af4959739e0f6a2dfb35dc70d513940a`. Each adapted rule identifies its original file.
+
+The [README at the source revision](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/README.md#license) declares MIT. That revision has no separate license file. The following notice is reproduced unchanged from the [upstream LICENSE at `b2fc14c`](https://github.com/DeckardGer/tanstack-agent-skills/blob/b2fc14c974b2ca09b38de09c28237f240175205b/LICENSE); the rule text remains attributed to its original revision.
+
+MIT License
+
+Copyright (c) 2026 Deckard Gerritsen
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

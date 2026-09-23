@@ -1,0 +1,3 @@
+name: TanStack Query
+description: Cache, fetch, mutate, and render server data with TanStack Query.
+whenToRead: Before planning, implementing, reviewing, or debugging TanStack Query keys, fetches, cache behavior, mutations, or SSR integration.
