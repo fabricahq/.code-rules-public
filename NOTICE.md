@@ -83,3 +83,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Zustand references
+
+The Zustand rules are original guidance informed by documentation and examples, not copies of an upstream rule set. They retain references to the relevant APIs and draw on:
+
+- [ExplainX's rendering of Zustand guidance from jezweb/claude-skills](https://explainx.ai/skills/jezweb/claude-skills/zustand-state-management).
+- [Zustand guidance in awesome-cursor-rules-mdc](https://github.com/sanjeed5/awesome-cursor-rules-mdc/blob/main/rules-mdc/zustand.mdc).
+
+These references do not transfer ownership of the upstream material to Fabrica.

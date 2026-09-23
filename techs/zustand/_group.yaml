@@ -1,0 +1,3 @@
+name: Zustand
+description: Manage shared client state and store lifecycle with Zustand.
+whenToRead: Before planning, implementing, reviewing, or testing Zustand stores, subscriptions, persistence, hydration, or actions.
