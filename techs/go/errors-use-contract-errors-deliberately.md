@@ -1,58 +1,60 @@
 ---
-title: "Use Contract Errors Deliberately"
-whenToRead: "Before defining or wrapping a Go error that callers may inspect with errors.Is or errors.As."
+title: "Expose error identity only for contract errors"
+whenToRead: "Before defining sentinel or typed errors in Go, or writing, changing, or reviewing code that wraps errors with %w or checks them with errors.Is or errors.As."
 impact: "MEDIUM"
-impactDescription: "separates caller-visible semantics from diagnostic failures"
-tags: "go, errors, wrapping, sentinel, contract, domain, boundary"
+impactDescription: "Wrapping implementation errors with %w makes driver and library errors part of a package's API, so callers depend on details that change with the implementation."
+tags: "go, errors, api-design, wrapping"
 ---
 
-## Use Contract Errors Deliberately
+## Expose error identity only for contract errors
 
-Define or return a domain/package contract error only when callers should branch
-on its identity. Otherwise return a contextual `fmt.Errorf` for diagnostics.
+Let callers inspect an error's identity, through `%w`, `errors.Is`, or `errors.As`, only when the error is part of the package's contract.
+Translate implementation errors, such as database driver errors, into contract errors or wrap them with `%v`.
 
-Contract errors are API. Once a package returns `fmt.Errorf("...: %w",
-store.ErrNotFound)`, callers may depend on `errors.Is(err, store.ErrNotFound)`.
-That is appropriate for stable semantics such as `store.ErrNotFound`,
-`store.ErrForbidden`, `store.ErrConflict`, and app validation errors. It is not
-appropriate for implementation details such as `pgx.ErrNoRows`,
-`pgconn.PgError`, `sql.ErrNoRows`, or `fs.PathError` unless those concrete
-errors are intentionally part of the package contract.
+### Implementation
 
-**Incorrect:**
+- Define a contract error only when a caller maps it to behavior, such as an HTTP status, a UI state, a retry, or a recovery path.
+- Wrap contract errors with `%w`, such as `fmt.Errorf("load document id=%q: %w", id, store.ErrNotFound)`.
+- At package boundaries, translate implementation errors, such as `pgx.ErrNoRows`, `sql.ErrNoRows`, or `*fs.PathError`, into the package's contract errors when they have a meaning callers need.
+- Wrap other internal failures with `%v`, so the text is kept for logs but the identity is not exposed.
+- Choose contract errors by meaning, such as not found, forbidden, conflict, or invalid input.
+
+### Rationale
+
+`%w` makes the wrapped error visible to `errors.Is` and `errors.As`, so callers can and will depend on it.
+A driver error exposed this way ties every caller to the current database library, and swapping the driver silently changes behavior that callers branch on.
+Translating at the boundary keeps the contract stable while the implementation changes.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```go
-if err := q.SaveDocumentDraft(ctx, params); err != nil {
-	return fmt.Errorf("save document draft: %w", err)
+document, err := queries.GetDocument(ctx, documentID)
+if err != nil {
+	return Document{}, fmt.Errorf("load document documentID=%q: %w", documentID, err)
 }
 ```
 
-This exposes a database driver error as a caller-visible API.
+Callers can now test for `pgx.ErrNoRows`, which makes the driver's error part of this package's API.
 
 **Correct:**
 
 ```go
+document, err := queries.GetDocument(ctx, documentID)
 if errors.Is(err, pgx.ErrNoRows) {
-	return fmt.Errorf("load document documentID=%q: %w", documentID, store.ErrNotFound)
+	return Document{}, fmt.Errorf("load document documentID=%q: %w", documentID, store.ErrNotFound)
 }
 if err != nil {
-	return fmt.Errorf("load document documentID=%q: %v", documentID, err)
+	return Document{}, fmt.Errorf("load document documentID=%q: %v", documentID, err)
 }
 ```
 
-The no-row case is translated into the store contract. The unexpected driver
-error keeps diagnostic text without exposing driver identity.
+The missing row becomes the store's `ErrNotFound`, and other driver errors keep their text without exposing their identity.
 
-**Guidelines:**
+### Validation
 
-- Add a contract error only when a caller maps it to behavior: HTTP status,
-  desktop API shape, UI state, retry/recovery, telemetry, or cross-implementation
-  semantics.
-- Wrap contract errors with `%w`; do not wrap implementation details with `%w`
-  at package boundaries.
-- Use `%v` for internal failures where callers can only log, show a generic
-  failure, or abort the operation.
-- Choose the contract by domain meaning. `ErrNotFound` is for absent or
-  intentionally cloaked resources, `ErrForbidden` is for known-but-denied
-  access, `ErrConflict` is for uniqueness/state conflicts, and validation
-  errors are for bad commands.
+Search package boundaries for `%w` and check that each wrapped error is a documented contract error.
+Check that callers branch only on contract errors, never on driver or library errors from another layer.
+
+Wrapping with `%w` inside one package, where the error does not cross its boundary, is not a violation.

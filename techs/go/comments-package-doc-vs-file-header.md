@@ -1,33 +1,43 @@
 ---
-title: "Separate Package Docs From File Headers"
-whenToRead: "Before writing or reviewing a comment immediately above a Go package declaration."
+title: "Separate package documentation from file headers"
+whenToRead: "Before writing, changing, or reviewing a comment at the top of a Go file, above the package clause, or a package's doc.go."
 impact: "LOW"
-impactDescription: "prevents file-level notes from accidentally becoming package documentation"
-tags: "go, comments, package, docs, file-header, spacing"
+impactDescription: "A file comment attached to the package clause becomes the package's documentation, and a detached package comment is lost from go doc."
+tags: "go, comments, package-docs, godoc"
 ---
 
-## Separate Package Docs From File Headers
+## Separate package documentation from file headers
 
-In Go, a top comment immediately followed by `package` is package
-documentation. A blank line between the comment and `package` makes the comment
-a file header instead. Choose deliberately:
+Attach a comment directly to the `package` clause only when it documents the whole package, and start it with `Package <name>`.
+Separate a comment about one file from the `package` clause with a blank line.
 
-- If the comment documents the package as a whole, attach it directly to
-  `package` and start it with `Package <name> ...`.
-- If the comment documents why this file exists or what this file owns, leave
-  exactly one blank line before `package`.
+### Implementation
 
-**Incorrect file header:**
+- For package documentation, put the comment directly above `package`, starting with `Package <name> ...`, in `doc.go` or the package's central file.
+- For a file header, leave exactly one blank line between the comment and `package`, and do not start it with `Package <name>`.
+- Keep package documentation in one file per package.
+- When there is no package-level documentation to add, write a file header rather than an accidental package doc.
+
+### Rationale
+
+Go treats a comment immediately before the `package` clause as package documentation, shown by `go doc` and pkg.go.dev.
+A comment about one file attached there becomes the package's description, and if several files do it, their comments are combined.
+A package comment separated by a blank line is not documentation at all.
+
+### Examples
+
+#### Application: A file header
+
+**Incorrect (counterexample):**
 
 ```go
 // Projection helpers for mock fixture JSON.
 package devseed
 ```
 
-The comment describes one file, but because it touches `package`, Go treats it
-as package documentation.
+The comment describes one file, but Go treats it as the package's documentation.
 
-**Correct file header:**
+**Correct:**
 
 ```go
 // Projection helpers for mock fixture JSON.
@@ -35,33 +45,28 @@ as package documentation.
 package devseed
 ```
 
-Use this form when a source file needs a file-level comment.
+#### Application: Package documentation
 
-**Incorrect package doc:**
+**Incorrect (counterexample):**
 
 ```go
-// Package devseed owns the canonical local-development sample world.
+// Package devseed builds the sample data used in local development.
 
 package devseed
 ```
 
-The comment describes the whole package, but the blank line detaches it from
-the package declaration.
+The blank line detaches the package comment, so `go doc` shows none.
 
-**Correct package doc:**
+**Correct:**
 
 ```go
-// Package devseed owns the canonical local-development sample world.
+// Package devseed builds the sample data used in local development.
 package devseed
 ```
 
-**Guidelines:**
+### Validation
 
-- Do not start file headers with `Package <name>`; that wording is reserved for
-  package docs.
-- Do not attach file headers directly to `package`, even if the file is the only
-  file in the package.
-- Put package docs in the file intended to own package documentation, commonly
-  `doc.go` or the package's central source file.
-- If there is no package-level documentation to add, prefer a file header with a
-  blank line over an accidental package doc.
+Run `go doc ./path/to/package` and check that it shows the intended package description and no file-specific text.
+Search for comments attached to `package` that do not start with `Package <name>`.
+
+A file header separated from `package` by a blank line is not a violation.
