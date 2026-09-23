@@ -1,6 +1,6 @@
 # Source notices
 
-The observable-behavior testing rule and TypeScript rules adapt the TypeScript Style Guide by mkosir at commit 86bebd58a987e23277dba02028c0ee2d6ffb5073. Its notice follows unchanged:
+The observable-behavior testing rule and TypeScript rules adapt the [TypeScript Style Guide](https://github.com/mkosir/typescript-style-guide/tree/86bebd58a987e23277dba02028c0ee2d6ffb5073) by mkosir at commit 86bebd58a987e23277dba02028c0ee2d6ffb5073. Its notice follows unchanged:
 
 MIT License
 
