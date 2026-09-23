@@ -92,3 +92,7 @@ The Zustand rules are original guidance informed by documentation and examples, 
 - [Zustand guidance in awesome-cursor-rules-mdc](https://github.com/sanjeed5/awesome-cursor-rules-mdc/blob/main/rules-mdc/zustand.mdc).
 
 These references do not transfer ownership of the upstream material to Fabrica.
+
+## Testing philosophy reference
+
+`assets/testing-philosophy.md` is based on Yevgeniy Brikman's talk [Agility Requires Safety](https://www.ybrikman.com/blog/2016/02/14/agility-requires-safety/) (2016). The asset paraphrases and extends its ideas in original wording; no text or slides from the talk are reproduced, and the talk remains his work.
