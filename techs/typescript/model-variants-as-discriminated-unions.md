@@ -1,10 +1,10 @@
 ---
 title: "Model distinct states as discriminated unions"
-whenToRead: "Before planning, writing, changing, or reviewing TypeScript types or code for values that can be in one of several states with different data, such as operation results, loading states, or events with kind-specific fields."
+whenToRead: "Before planning, writing, changing, or reviewing TypeScript types, function parameters, or code for values that can be in one of several states with different data, such as operation results, loading states, status flags, or events with kind-specific fields."
 impact: "MEDIUM"
 impactDescription: "Makes impossible field combinations harder to construct and missing cases easier to detect."
 tags: "typescript"
-attribution: [{"url":"https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx","description":"Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
+attribution: [{"url":"https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx","description":"Underlying TypeScript Style Guide material by mkosir, including its boolean-flag and function-argument union guidance, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
 ---
 
 ## Model distinct states as discriminated unions
@@ -20,6 +20,7 @@ Keep each state's required data in its own variant instead of making every field
 - When code must handle every variant, make the compiler report a missing case.
   Assign the value to `never` in the `default` branch, or use the project's exhaustive-switch lint rule.
 - Do not add a `default` branch that silently handles unknown variants in code that must handle every variant.
+- Replace several boolean flags that describe one state with a single status union, and give a function whose parameters differ by use case a union of parameter shapes.
 
 A truly independent on/off option can remain a boolean.
 It does not need a state model unless it combines with other fields into states that exclude each other.
@@ -93,6 +94,47 @@ function describe(result: Result): string {
 ```
 
 Adding `pending` makes the assignment to `never` fail to compile, which points to the case that needs handling.
+
+#### Application: Several boolean flags
+
+**Incorrect (counterexample):**
+
+```ts
+type Order = { isPending: boolean; isProcessing: boolean; isConfirmed: boolean };
+```
+
+Eight combinations are possible, although an order is only ever in one of three states.
+
+**Correct:**
+
+```ts
+type Order = { status: 'pending' | 'processing' | 'confirmed' };
+```
+
+#### Application: Function parameters
+
+**Incorrect (counterexample):**
+
+```ts
+function renderStatus(params: { data?: Array<Product>; startedAt?: number; error?: string }) {
+  // ...
+}
+```
+
+Callers can pass none, all, or any mix of the fields, and the function must guess which case applies.
+
+**Correct:**
+
+```ts
+type RenderStatusParams =
+  | { status: 'success'; data: Array<Product> }
+  | { status: 'loading'; startedAt: number }
+  | { status: 'error'; error: string };
+
+function renderStatus(params: RenderStatusParams) {
+  // ...
+}
+```
 
 #### Application: An independent option
 
