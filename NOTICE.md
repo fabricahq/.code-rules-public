@@ -1,6 +1,6 @@
 # Source notices
 
-Some React, TypeScript, and testing rules adapt the [TypeScript Style Guide](https://github.com/mkosir/typescript-style-guide/tree/86bebd58a987e23277dba02028c0ee2d6ffb5073) by mkosir at commit 86bebd58a987e23277dba02028c0ee2d6ffb5073. Its notice follows unchanged:
+Some React, TypeScript, code-design, and testing rules adapt the [TypeScript Style Guide](https://github.com/mkosir/typescript-style-guide/tree/86bebd58a987e23277dba02028c0ee2d6ffb5073) by mkosir at commit 86bebd58a987e23277dba02028c0ee2d6ffb5073. Its notice follows unchanged:
 
 ## TypeScript Style Guide
 
