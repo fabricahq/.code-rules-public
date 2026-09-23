@@ -1,0 +1,3 @@
+name: Go
+description: Go error contracts, diagnostic context, comments, and edge-focused tests.
+whenToRead: Before planning, writing, testing, or reviewing Go packages, structs, errors, or tests.
