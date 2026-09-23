@@ -17,17 +17,19 @@ Giving an agent a rule does not guarantee compliance. Ask your agent to read the
 | Group | Rules | What it helps with |
 | --- | --- | --- |
 | [Code design](practices/code-design/) | 1 | Express operations as meaningful steps |
+| [Performance](practices/performance/) | 1 | Remove repeated work from measured hot paths |
 | [Testing](practices/testing/) | 6 | Choose tests by risk, test at the lowest layer, keep tests independent, test behavior, reproduce bugs, and cover boundary cases |
 | [Go](techs/go/) | 4 | Explain contracts and preserve useful errors |
 | [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
+| [JavaScript](techs/javascript/) | 7 | Coordinate async work, use browser APIs efficiently, and keep paths analyzable |
 | [Playwright](techs/playwright/) | 3 | Keep browser tests independent and use stable locators |
-| [React](techs/react/) | 87 | Structure components, manage state, and avoid unnecessary work |
+| [React](techs/react/) | 39 | Structure components, manage state, and avoid unnecessary work |
 | [TanStack Query](techs/tanstack-query/) | 22 | Manage query keys, caching, mutations, and hydration |
 | [TanStack Router](techs/tanstack-router/) | 18 | Structure routes, validate inputs, and coordinate data loading |
 | [TypeScript](techs/typescript/) | 33 | Model data, preserve contracts, and keep code understandable |
 | [Zustand](techs/zustand/) | 11 | Design stores, subscriptions, and persistence |
 
-The 186 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
+The 146 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
 
 Practice groups apply across languages. Their TypeScript examples illustrate the ideas; they do not limit those practices to TypeScript projects.
 
@@ -37,6 +39,7 @@ The library contains source rules and group metadata:
 rule-library.yaml        Library format and license information
 practices/               Practices that apply across technologies
   code-design/
+  performance/
   testing/
 techs/                   Guidance for a specific technology
   typescript/

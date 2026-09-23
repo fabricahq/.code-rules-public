@@ -28,7 +28,7 @@ SOFTWARE.
 
 ## Vercel Agent Skills
 
-React rules include adaptations of Vercel Labs Agent Skills at commit `4ec6f84b61cd3c931046c3e6e398f3ae7de372f7`, including its React best practices and composition patterns. Each adapted rule identifies its original file.
+React, JavaScript, and Performance rules include adaptations of Vercel Labs Agent Skills at commit `4ec6f84b61cd3c931046c3e6e398f3ae7de372f7`, including its React best practices and composition patterns. Each adapted rule identifies its original file.
 
 The [upstream README at that revision](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/README.md#license) declares MIT. That revision contains no separate license file, and its README supplies no copyright notice. We credit Vercel Labs and the upstream contributors; we do not claim ownership of their work. The MIT permission and warranty terms are reproduced below.
 
