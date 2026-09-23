@@ -41,6 +41,8 @@ Edge cases fail in three ways: a crash, a misleading error, or a silently wrong 
 A test that only checks for "no crash" misses the last two, and a suite that only uses ordinary inputs never reaches the edge paths at all.
 Asserting through the caller-facing contract, rather than the current implementation's branches, keeps these tests valid when the implementation is refactored.
 
+Background: [Testing philosophy](../../assets/testing-philosophy.md).
+
 ### Examples
 
 These examples describe tests in prose because the practice applies in any language.

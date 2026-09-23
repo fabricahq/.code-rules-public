@@ -35,6 +35,8 @@ A test written after a fix may never have been able to fail.
 Running it against the unfixed code first proves that it detects the bug.
 A later change that reintroduces the bug then fails the test instead of reaching users again.
 
+Background: [Testing philosophy](../../assets/testing-philosophy.md).
+
 ### Examples
 
 #### Application: A logic bug a unit test can reproduce

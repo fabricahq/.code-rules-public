@@ -4,7 +4,7 @@ whenToRead: "Before planning, writing, changing, or reviewing automated tests, o
 impact: "HIGH"
 impactDescription: "Keeps tests useful during refactoring and focused on outcomes users depend on."
 tags: "testing"
-attribution: [{"url": "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx", "description": "Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
+attribution: [{"url":"https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx","description":"Underlying TypeScript Style Guide material by mkosir, including its snapshot-testing guidance, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
 ---
 
 ## Test observable behavior
@@ -22,6 +22,8 @@ Arrange a controlled starting state, perform the behavior through the interface 
   Avoid selectors tied to markup structure or styling classes.
 - Use several assertions in one test when together they establish one behavior.
   Do not add assertions about incidental details that callers do not depend on.
+- Avoid large snapshot assertions of rendered output or data structures; they assert every incidental detail, fail on harmless changes, and invite updating the snapshot without review.
+  A small snapshot whose whole content is the contract, such as a critical design-system element or a serialized wire format, is acceptable.
 
 A unit test of an internal module is appropriate when it tests that module's own contract, such as a pure helper with documented results.
 The rule concerns the interface of the unit under test, not whether a package exports it.
@@ -32,6 +34,8 @@ Do not export a private helper solely so that a test can call it.
 Implementation details change during refactoring even when behavior does not.
 A test that asserts them breaks on harmless changes, which teaches people to update or ignore failing tests, and it can still pass when the observable behavior is wrong.
 A test that asserts observable results fails only when something a caller or user depends on changes.
+
+Background: [Testing philosophy](../../assets/testing-philosophy.md).
 
 ### Examples
 
@@ -61,6 +65,19 @@ The test no longer checks pricing, and it breaks if pricing moves to another mod
 
 Replace only the payment provider with a fake, run the real pricing code, and assert that the fake received exactly one charge for the correct amount.
 Charging once is part of the contract, so asserting that interaction is appropriate.
+
+#### Application: A snapshot of rendered output
+
+A component renders a user's profile card.
+
+**Incorrect (counterexample):**
+
+Render the card and assert that its full markup matches a stored snapshot.
+Changing a class name or wrapper element fails the test, and the usual fix is to update the snapshot without checking what changed.
+
+**Correct:**
+
+Assert the user's name, role, and avatar alternative text, which are what users rely on.
 
 #### Application: A user interface test
 
