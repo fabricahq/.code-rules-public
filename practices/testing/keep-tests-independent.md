@@ -1,6 +1,6 @@
 ---
 title: "Keep tests independent"
-whenToRead: "Before planning, writing, debugging, or reviewing automated tests that share data, global state, or services, such as tests against a shared database, tests that change configuration or the clock, or tests that call external services."
+whenToRead: "Before planning, writing, debugging, or reviewing automated tests that share data, global state, or services, such as tests against a shared database, browser tests that run in parallel workers, tests that change configuration or the clock, or tests that call external services."
 impact: "MEDIUM-HIGH"
 impactDescription: "Tests that depend on each other or on live services fail intermittently or pass by accident, which makes every failure harder to trust and diagnose."
 tags: "testing"
@@ -18,6 +18,9 @@ A test should pass when run alone, in any order, and alongside the rest of the s
 - Restore any global state a test changes, such as environment variables, feature flags, or shared singletons.
 - Control time and randomness when results depend on them.
 - Replace live external services with fakes at the boundary, so that results do not depend on another organization's availability, rate limits, or data.
+- Put shared setup in fixtures or helper functions, never in module-level variables that one test writes and another reads.
+- In browser tests, start each test from its own navigation, and assert on the records the test created rather than on counts that seeded data or a neighboring test could change.
+- Do not use a serial execution mode, such as Playwright's `test.describe.serial`, to make dependent tests pass; merge them into one test or make each one self-sufficient.
 
 A scenario whose steps must run in sequence, such as a multi-step user journey, belongs in one test rather than in a chain of tests that depend on each other's order.
 
@@ -34,6 +37,39 @@ Live services add failures that the code under test did not cause.
 Background: [Testing philosophy](../../assets/testing-philosophy.md).
 
 ### Examples
+
+#### Application: Tests chained through module state
+
+**Incorrect (counterexample):**
+
+```ts
+let createdName: string;
+
+test('should create a record', async ({ page }) => {
+  await page.goto('/');
+  createdName = await createRecord(page, 'Shared Record');
+});
+
+test('should archive the record', async ({ page }) => {
+  await page.goto('/');
+  await archiveRecord(page, createdName);
+});
+```
+
+The second test fails when run alone, on retry, or in a different worker.
+
+**Correct:**
+
+```ts
+test('should archive a record after creating it', async ({ page }) => {
+  await page.goto('/');
+  const name = `Archive journey ${test.info().testId}`;
+  await createRecord(page, name);
+  await archiveRecord(page, name);
+});
+```
+
+One test owns its whole scenario, with data named uniquely for it.
 
 #### Application: Tests that share a database
 
