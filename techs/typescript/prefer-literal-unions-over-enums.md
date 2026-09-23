@@ -1,121 +1,60 @@
 ---
-title: "Prefer Literal Unions Over Enums"
-whenToRead: "Before modeling a finite set of TypeScript values with an enum or literal union."
+title: "Prefer literal unions over enums"
+whenToRead: "Before writing, changing, or reviewing a TypeScript type for a fixed set of values, such as roles, statuses, or modes, or code that declares an enum."
 impact: "MEDIUM"
-impactDescription: "avoids enum runtime output and favors erased literal types or const data"
-tags: "typescript, enum, literal-union, as-const, runtime"
-
+impactDescription: "Enums generate runtime code, behave differently from the rest of TypeScript's structural types, and do not work with type-stripping tools."
+tags: "typescript, enums, literal-unions, as-const"
 attribution:
-  - url: "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx"
-    description: "Underlying TypeScript Style Guide material; required notice is retained in NOTICE.md."
+  - url: https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx
+    description: "Adapted from mkosir TypeScript Style Guide guidance (prefer-literal-unions-over-enums; MIT, notice retained in NOTICE.md): restructured to the rule template, fixed an example that did not parse, and added the type-stripping rationale."
 ---
 
-## Prefer Literal Unions Over Enums
+## Prefer literal unions over enums
 
-Enums are discouraged in the TypeScript ecosystem due to their runtime cost and quirks.
-The TypeScript documentation outlines several [pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls), and recently introduced the [--erasableSyntaxOnly](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-8.html#the---erasablesyntaxonly-option) flag to disable runtime-generating features like enums altogether.
+Represent a fixed set of values with a union of string literals.
+When code also needs the values at runtime, derive the union from an `as const` array or object.
 
-**Related automated rule:** [Reference](https://eslint.org/docs/latest/rules/no-restricted-syntax)
+### Implementation
 
-```js
-'no-restricted-syntax': [
-    'error',
-    {
-      selector: 'TSEnumDeclaration',
-      message: 'Replace enum with a literal type or a const assertion.',
-    },
-]
+- Use `type Role = 'guest' | 'moderator' | 'admin'` when only the type is needed.
+- Use `const ROLES = ['guest', 'moderator', 'admin'] as const` and `type Role = (typeof ROLES)[number]` when code iterates over the values.
+- Use an `as const` object when names map to different values, such as color names to hex codes.
+- Enable the `erasableSyntaxOnly` compiler option, or ban `TSEnumDeclaration` with `no-restricted-syntax`, to prevent new enums.
+
+### Rationale
+
+An enum compiles to a runtime object and is nominal: a plain string `'admin'` is not assignable to `Role.Admin`.
+Enums are also not erasable syntax, so tools that run TypeScript by stripping types, such as Node's built-in type stripping, reject them; TypeScript 5.8 added `erasableSyntaxOnly` to flag them.
+Literal unions have no runtime cost and accept plain values that match.
+
+### Examples
+
+**Incorrect (counterexample):**
+
+```ts
+enum UserRole {
+  Guest = 'guest',
+  Admin = 'admin',
+}
+
+setRole('admin'); // error: string is not assignable to UserRole
 ```
 
-As rule of a thumb, prefer:
+**Correct:**
 
-- Literal types whenever possible.
-- Const assertion arrays when looping through values.
-- Const assertion objects when enumerating arbitrary values.
+```ts
+const USER_ROLES = ['guest', 'admin'] as const;
+type UserRole = (typeof USER_ROLES)[number];
 
-Examples:
+setRole('admin');
 
-- Use literal types to avoid runtime objects and reduce bundle size.
+for (const role of USER_ROLES) {
+  seedRole(role);
+}
+```
 
-  ```ts
-  // Avoid using enums as they increase the bundle size
-  enum UserRole {
-    GUEST = 'guest',
-    MODERATOR = 'moderator',
-    ADMINISTRATOR = 'administrator',
-  }
+### Validation
 
-  // Transpiled JavaScript
-  ('use strict');
-  var UserRole;
-  (function (UserRole) {
-    UserRole['GUEST'] = 'guest';
-    UserRole['MODERATOR'] = 'moderator';
-    UserRole['ADMINISTRATOR'] = 'administrator';
-  })(UserRole || (UserRole = {}));
+Run the type checker with `erasableSyntaxOnly`, or the lint rule, and check that no enums remain in authored code.
 
-  // Use literal types - Types are stripped during transpilation
-  type UserRole = 'guest' | 'moderator' | 'administrator';
-
-  const isGuest = (role: UserRole) => role === 'guest';
-  ```
-
-- Use const assertion arrays when looping through values.
-
-  ```tsx
-  // Avoid using enums
-  enum USER_ROLES {
-    guest = 'guest',
-    moderator = 'moderator',
-    administrator = 'administrator',
-  }
-
-  // Use const assertions arrays
-  const USER_ROLES = ['guest', 'moderator', 'administrator'] as const;
-  type UserRole = (typeof USER_ROLES)[number];
-
-  const seedDatabase = () => {
-    USER_ROLES.forEach((role) => {
-      db.roles.insert(role);
-    }
-  }
-  const insert = (role: UserRole) => {...
-
-  const UsersRoleList = () => {
-    return (
-      <div>
-        {USER_ROLES.map((role) => (
-          <Item key={role} role={role} />
-        ))}
-      </div>
-    );
-  };
-  const Item = ({ role }: { role: UserRole }) => {...
-  ```
-
-- Use const assertion objects when enumerating arbitrary values.
-
-  ```ts
-  // Avoid using enums
-  enum COLORS {
-    primary = '#B33930',
-    secondary = '#113A5C',
-    brand = '#9C0E7D',
-  }
-
-  // Use const assertions objects
-  const COLORS = {
-    primary: '#B33930',
-    secondary: '#113A5C',
-    brand: '#9C0E7D',
-  } as const;
-
-  type Colors = typeof COLORS;
-  type ColorKey = keyof Colors; // Type "primary" | "secondary" | "brand"
-  type ColorValue = Colors[ColorKey]; // Type "#B33930" | "#113A5C" | "#9C0E7D"
-
-  const setColor = (color: ColorValue) => {...
-
-  setColor(COLORS.primary);
-  setColor('#B33930');
-  ```
+Enums in generated code or third-party types are not a violation.

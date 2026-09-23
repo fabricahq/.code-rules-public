@@ -1,42 +1,46 @@
 ---
-title: "Use Boolean() for Explicit Boolean Coercion"
-whenToRead: "Before writing or reviewing TypeScript code that intentionally coerces a value to boolean."
-impact: "MEDIUM"
-impactDescription: "makes intentional truthiness conversion searchable and distinguishes coercion from type narrowing"
-tags: "typescript, boolean, coercion, truthiness, narrowing, readability"
+title: "Use Boolean() for explicit boolean coercion"
+whenToRead: "Before writing, changing, or reviewing TypeScript code that converts a value to a boolean, such as !!value, or tests a value's truthiness."
+impact: "LOW"
+impactDescription: "Double negation is easy to misread, and truthiness checks hide which absent or empty values a condition excludes."
+tags: "typescript, booleans, readability, conventions"
 ---
 
-## Use Boolean() for Explicit Boolean Coercion
+## Use Boolean() for explicit boolean coercion
 
-When code intentionally converts a value to a boolean, use `Boolean(value)`.
-Avoid `!!value`; it is terse but less searchable and less explicit for readers
-who do not already know the idiom.
+When code intentionally converts a value to a boolean from its truthiness, write `Boolean(value)` instead of `!!value`.
+When the condition has a specific meaning, such as "present" or "non-empty", write that comparison instead of coercing.
 
-**Incorrect (implicit-looking double negation):**
+### Implementation
+
+- Replace `!!value` with `Boolean(value)`.
+- Compare against the specific absent value, such as `value !== undefined`, when you need TypeScript to narrow the variable afterward; `Boolean(value)` in a separate variable does not narrow it.
+- Keep domain comparisons, such as `count > 0`, `name.trim() !== ''`, or `status === 'ready'`; they say which condition matters.
+
+This is a readability convention.
+
+### Rationale
+
+`Boolean(value)` names the intent and is easy to search for, while `!!` is a symbol pair that readers can overlook.
+Truthiness also treats `0`, `''`, and `NaN` as false, which is often not what a condition means; an explicit comparison makes the excluded cases visible.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```ts
 const hasAccount = !!accountContext;
 ```
 
-**Correct (explicit coercion):**
+**Correct:**
 
 ```ts
 const hasAccount = Boolean(accountContext);
+const canView = accountContext !== undefined && sharedFile.allowedAccountIds.includes(accountContext.id);
 ```
 
-**Prefer guards when narrowing matters:**
+### Validation
 
-```ts
-const canViewDocument = accountContext !== undefined && document.allowedAccountIds.includes(accountContext.id);
-```
+Search for `!!` and replace intentional coercions with `Boolean()` or a specific comparison.
 
-`Boolean(value)` is for producing a boolean value from truthiness. It does not
-narrow the original variable's type for later code. When the goal is to prove a
-value is present, compare against the specific absent value (`undefined`,
-`null`, or both) so TypeScript can narrow the type and the reader can see which
-cases are intentionally excluded.
-
-Do not replace existing comparisons with `Boolean(...)` when the comparison is
-carrying domain meaning. For example, `count > 0`, `name.trim().length > 0`, and
-`status === "ready"` are clearer than truthiness coercion because they say which
-condition matters.
+A specific comparison, such as `count > 0`, is not a violation.

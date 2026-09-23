@@ -1,39 +1,57 @@
 ---
-title: "Separate Type Imports"
-whenToRead: "Before adding or reviewing TypeScript imports or exports used only by the type checker."
+title: "Import types with import type"
+whenToRead: "Before writing, changing, or reviewing TypeScript imports of types, interfaces, or other declarations used only in type positions."
 impact: "MEDIUM"
-impactDescription: "makes runtime dependencies distinct from type-only dependencies"
-tags: "typescript, imports, import-type, bundling, tree-shaking"
-
+impactDescription: "Under per-file transpilers and verbatimModuleSyntax, a type imported as a value is kept in the emitted JavaScript and can fail at runtime or load a module for no reason."
+tags: "typescript, imports, verbatimModuleSyntax, isolatedModules"
 attribution:
-  - url: "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx"
-    description: "Underlying TypeScript Style Guide material; required notice is retained in NOTICE.md."
+  - url: https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx
+    description: "Adapted from mkosir TypeScript Style Guide guidance (separate-type-imports; MIT, notice retained in NOTICE.md): restructured to the rule template and corrected the rationale from bundle size to emit correctness under verbatimModuleSyntax and per-file transpilers."
 ---
 
-## Separate Type Imports
+## Import types with import type
 
-TypeScript allows specifying a `type` keyword on imports to indicate that the export exists only in the type system, not at runtime.
+Import anything used only as a type with `import type`, or with an inline `type` modifier, so the import is removed from the emitted JavaScript.
 
-Type imports must always be separated:
+### Implementation
 
-- Tree Shaking and Dead Code Elimination: If you use `import` for types instead of `import type`, the bundler might include the imported module in the bundle unnecessarily, increasing the size. Separating imports ensures that only necessary runtime code is included.
-- Minimizing Dependencies: Some modules may contain both runtime and type definitions. Mixing type imports with runtime imports might lead to accidental inclusion of unnecessary runtime code.
-- Improves code clarity by making the distinction between runtime dependencies and type-only imports explicit.
+- Write `import type { User } from './user'` for type-only imports.
+- Write `import { createUser, type User } from './user'` when a module provides both values and types.
+- Enable `verbatimModuleSyntax`, which requires type-only imports to be marked, and `@typescript-eslint/consistent-type-imports` to fix them automatically.
 
-**Related automated rule:** [Reference](https://typescript-eslint.io/rules/consistent-type-imports/)
+### Rationale
 
-```js
-'@typescript-eslint/consistent-type-imports': 'error'
-```
+Tools that transpile one file at a time, such as esbuild, SWC, and Babel, cannot always tell whether an imported name is a type, so they may keep the import.
+With `verbatimModuleSyntax`, TypeScript itself keeps every import not marked as a type.
+A kept import of a type-only export fails at runtime or loads the module, with its side effects, for nothing.
+Marking type imports makes the emitted code predictable and shows at a glance which imports are needed at runtime.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```ts
-// Avoid using `import` for both runtime and type
-import { MyClass } from 'some-library';
+import { User } from './user';
 
-// Even if MyClass is only a type, the entire module might be included in the bundle.
-
-// Use `import type`
-import type { MyClass } from 'some-library';
-
-// This ensures only the type is imported and no runtime code from "some-library" ends up in the bundle.
+export function greet(user: User): string {
+  return `Hello, ${user.name}`;
+}
 ```
+
+If `./user` exports `User` only as a type, a per-file transpiler may emit an import of a name that does not exist at runtime.
+
+**Correct:**
+
+```ts
+import type { User } from './user';
+
+export function greet(user: User): string {
+  return `Hello, ${user.name}`;
+}
+```
+
+### Validation
+
+Enable `verbatimModuleSyntax` or run the lint rule, and check that the type checker reports no unmarked type-only imports.
+
+An import used both as a value and a type needs no `type` marker.

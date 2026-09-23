@@ -1,33 +1,44 @@
 ---
-title: "Use Generic Array Types"
-whenToRead: "Before choosing array type syntax for new TypeScript declarations."
+title: "Use one array type syntax"
+whenToRead: "Before writing or reviewing TypeScript array type annotations."
 impact: "LOW"
-impactDescription: "keeps mutable and readonly array annotations in one consistent syntax"
-tags: "typescript, arrays, readonlyarray, style"
-
+impactDescription: "Mixing Array<T> and T[] makes array types look different for no reason."
+tags: "typescript, arrays, conventions"
 attribution:
-  - url: "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx"
-    description: "Underlying TypeScript Style Guide material; required notice is retained in NOTICE.md."
+  - url: https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx
+    description: "Adapted from mkosir TypeScript Style Guide guidance (use-generic-array-types; MIT, notice retained in NOTICE.md): restructured to the rule template and framed as a consistency convention."
 ---
 
-## Use Generic Array Types
+## Use one array type syntax
 
-**Related automated rule:** Array types should be defined using generic syntax [Reference](https://typescript-eslint.io/rules/array-type/#generic)
+Write array types with the generic syntax, `Array<T>` and `ReadonlyArray<T>`, and enforce it with a lint rule.
 
-```js
-'@typescript-eslint/array-type': ['error', { default: 'generic' }]
-```
-**Note:**
+### Implementation
 
-Since there is no functional difference between the 'generic' and 'array' definitions, feel free to choose the one
-  that your team finds most readable.
+- Use `Array<string>` and `ReadonlyArray<string>` rather than `string[]` and `readonly string[]`.
+- Enforce with `@typescript-eslint/array-type` set to `{ default: 'generic' }`.
+
+This is a consistency convention; the two syntaxes are equivalent, and a project may choose `T[]` instead as long as it uses one.
+The generic form reads the same for mutable and readonly arrays and stays clear with complex element types, such as `Array<string | number>`.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```ts
-// Avoid
-const x: string[] = ['foo', 'bar'];
-const y: readonly string[] = ['foo', 'bar'];
-
-// Use
-const x: Array<string> = ['foo', 'bar'];
-const y: ReadonlyArray<string> = ['foo', 'bar'];
+const names: string[] = [];
+const ids: readonly (string | number)[] = [];
 ```
+
+**Correct:**
+
+```ts
+const names: Array<string> = [];
+const ids: ReadonlyArray<string | number> = [];
+```
+
+### Validation
+
+Run the lint rule.
+
+A project that consistently uses `T[]` instead is not a violation.

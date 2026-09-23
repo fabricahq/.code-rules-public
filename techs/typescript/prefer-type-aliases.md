@@ -1,63 +1,58 @@
 ---
-title: "Prefer Type Aliases"
-whenToRead: "Before defining a TypeScript shape for which a type alias and interface are both viable."
+title: "Prefer type aliases over interfaces"
+whenToRead: "Before declaring or reviewing TypeScript object types, or when choosing between type and interface."
 impact: "LOW"
-impactDescription: "keeps type declarations consistent while reserving interfaces for declaration merging or extension boundaries"
-tags: "typescript, type-alias, interface, consistency"
-
+impactDescription: "Mixing type and interface without a rule makes declarations inconsistent, and only type can express unions and other computed types."
+tags: "typescript, type-aliases, interfaces, conventions"
 attribution:
-  - url: "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx"
-    description: "Underlying TypeScript Style Guide material; required notice is retained in NOTICE.md."
+  - url: https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx
+    description: "Adapted from mkosir TypeScript Style Guide guidance (prefer-type-aliases; MIT, notice retained in NOTICE.md): restructured to the rule template and replaced an example that did not parse."
 ---
 
-## Prefer Type Aliases
+## Prefer type aliases over interfaces
 
-TypeScript provides two options for defining types: `type` and `interface`. While these options have some functional differences, they are interchangeable in most cases. To maintain consistency, choose one and use it consistently.
+Declare types with `type` by default.
+Use `interface` only when you need declaration merging, such as extending a third-party library's or a global type.
 
-**Related automated rule:** Define all types using type alias [Reference](https://typescript-eslint.io/rules/consistent-type-definitions)
+### Implementation
 
-```js
-'@typescript-eslint/consistent-type-definitions': ['error', 'type']
-```
+- Use `type` for object shapes, unions, and computed types.
+- Use `interface` to augment existing declarations, such as `NodeJS.ProcessEnv` or a library's module types, and disable the lint rule on that line.
+- A library meant to be extended by consumers may prefer interfaces; choose deliberately.
+- Enforce with `@typescript-eslint/consistent-type-definitions` set to `'type'`.
 
-**Note:**
+This is a consistency convention; the two forms are interchangeable for most object types.
 
-Consider using interfaces when developing a package that might be extended by third-party consumers in the future or
-  when your team prefers working with interfaces. In these cases, you can disable linting rules if needed, such as when
-  defining type unions (e.g. `type Status = 'loading' | 'error'`).
+### Rationale
+
+`type` can express everything `interface` can for object shapes, plus unions, mapped types, and conditional types, so one form covers every case.
+Using one form consistently removes a decision from every declaration.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```ts
-// Avoid interface definitions
-interface UserRole = 'admin' | 'guest'; // Invalid - interfaces can't define type unions
-
 interface UserInfo {
   name: string;
   role: 'admin' | 'guest';
 }
+type UserRole = UserInfo['role'];
+```
 
-// Use type definition
+**Correct:**
+
+```ts
 type UserRole = 'admin' | 'guest';
 
 type UserInfo = {
   name: string;
   role: UserRole;
 };
-
 ```
 
-When performing declaration merging (e.g. extending third-party library types), use `interface` and disable the lint rule where necessary.
+### Validation
 
-```ts
-// types.ts
-declare namespace NodeJS {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-  export interface ProcessEnv {
-    NODE_ENV: 'development' | 'production';
-    PORT: string;
-    CUSTOM_ENV_VAR: string;
-  }
-}
+Run the lint rule, and check that remaining interfaces exist for declaration merging.
 
-// server.ts
-app.listen(process.env.PORT, () => {...}
-```
+An `interface` that augments a global or library type is not a violation.
