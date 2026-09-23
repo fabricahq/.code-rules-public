@@ -1,0 +1,3 @@
+name: Testing
+description: Test observable behavior, regressions, and boundary cases.
+whenToRead: When adding or changing behavior, fixing a bug, or writing and reviewing tests.
