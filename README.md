@@ -19,17 +19,17 @@ Giving an agent a rule does not guarantee compliance. Ask your agent to read the
 | [Code design](practices/code-design/) | 3 | Express operations as meaningful steps, separate pure computation from effects, and organize code by feature |
 | [Performance](practices/performance/) | 1 | Remove repeated work from measured hot paths |
 | [Testing](practices/testing/) | 8 | Choose tests by risk, test at the lowest layer, keep tests independent, test behavior, reproduce bugs, cover boundary cases, and name and run tests well |
-| [Go](techs/go/) | 4 | Explain contracts and preserve useful errors |
+| [Go](techs/go/) | 4 | Document fields and packages, and give errors context and deliberate contracts |
 | [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
 | [JavaScript](techs/javascript/) | 7 | Coordinate async work, use browser APIs efficiently, and keep paths analyzable |
-| [Playwright](techs/playwright/) | 3 | Keep browser tests independent and use stable locators |
+| [Playwright](techs/playwright/) | 2 | Synchronize with retrying assertions and use scoped, user-facing locators |
 | [React](techs/react/) | 39 | Structure components, manage state, and avoid unnecessary work |
 | [TanStack Query](techs/tanstack-query/) | 15 | Manage query keys, caching, mutations, and hydration |
 | [TanStack Router](techs/tanstack-router/) | 10 | Structure routes, validate inputs, and coordinate data loading |
 | [TypeScript](techs/typescript/) | 19 | Model data, preserve contracts, and keep code understandable |
 | [Zustand](techs/zustand/) | 10 | Design stores, subscriptions, and persistence |
 
-The 120 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
+The 119 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
 
 Practice groups apply across languages. Their TypeScript examples illustrate the ideas; they do not limit those practices to TypeScript projects.
 
