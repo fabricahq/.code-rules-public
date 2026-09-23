@@ -1,0 +1,3 @@
+name: Playwright
+description: Write stable browser tests with resilient locators, assertions, and isolated state.
+whenToRead: Before planning, writing, debugging, or reviewing Playwright browser tests and their test surfaces.
