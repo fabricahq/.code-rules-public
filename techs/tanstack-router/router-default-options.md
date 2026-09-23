@@ -1,172 +1,86 @@
 ---
-title: "router-default-options: Configure Router Default Options"
-whenToRead: "Before configuring global TanStack Router defaults for loading, errors, not-found views, or scroll behavior."
-impact: "HIGH"
-impactDescription: "keeps global router behavior consistent for preloading, errors, scroll, and performance"
-tags: "tanstack-router, router-options, preloading, errors, scroll-restoration"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/router-default-options.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-router/rules/router-default-options.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+title: "Set app-wide navigation behavior in router defaults"
+whenToRead: "Before planning, writing, changing, or reviewing a TanStack Router createRouter call, or deciding app-wide preloading, error, not-found, pending, or scroll restoration behavior."
+impact: "MEDIUM"
+impactDescription: "Without router defaults, every navigation waits for data after the click, unexpected errors and unknown URLs fall back to bare built-in screens, and back navigation loses scroll position."
+tags: "tanstack-router, createRouter, preload, errors, scroll-restoration"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/router-default-options.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule router-default-options (MIT, notice retained in NOTICE.md): merged the intent-preloading rule, restructured to the rule template, removed an incorrect structural sharing default, and added the Query error reset to the retry example."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/preload-intent.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule preload-intent (MIT, notice retained in NOTICE.md): merged the intent-preloading rule, restructured to the rule template, removed an incorrect structural sharing default, and added the Query error reset to the retry example."
 ---
 
-## router-default-options: Configure Router Default Options
+## Set app-wide navigation behavior in router defaults
 
-## Explanation
+Configure behavior that should apply to every route in `createRouter`: preloading on intent, a default error component with retry, a default not-found component, and scroll restoration.
+Override it per route only where a route needs something different.
 
-TanStack Router's `createRouter` accepts several default options that apply globally. Configure these for consistent behavior across your application including error handling, scroll restoration, and performance optimizations.
+### Implementation
 
-## Bad Example
+- Set `defaultPreload: 'intent'` so links preload their route's code and loaders on hover or focus.
+  Use `defaultPreloadDelay` to skip passing mouse movements.
+- Override per link with `preload={false}` for routes that are expensive or have side effects, or `preload="viewport"` for touch-heavy layouts where hover does not happen.
+- When the app uses TanStack Query, set `defaultPreloadStaleTime: 0` so Query controls freshness.
+  Without Query, preloaded data stays fresh for 30 seconds by default.
+- Set `defaultErrorComponent` with a retry that calls `router.invalidate()`, and, when using TanStack Query, also resets query errors.
+- Set `defaultNotFoundComponent` for unmatched URLs.
+- Set `scrollRestoration: true` so back and forward navigation return users to where they were.
+- Tune `defaultPendingComponent`, `defaultPendingMs`, and `defaultPendingMinMs` so slow navigations show progress without flashing it on fast ones.
+
+### Rationale
+
+Router defaults are applied to every route, so setting them once keeps behavior consistent and avoids each route re-implementing error and loading handling.
+Preloading on intent starts a route's work a few hundred milliseconds before the click.
+Without scroll restoration, back navigation drops users at the top of long lists.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Minimal router - missing useful defaults
-const router = createRouter({
-  routeTree,
-  context: { queryClient },
-})
-
-// Each route must handle its own errors
-// No scroll restoration on navigation
-// No preloading configured
+const router = createRouter({ routeTree, context: { queryClient } });
 ```
 
-## Good Example: Full Configuration
+Every navigation starts loading only after the click, errors show the built-in screen, and back navigation loses scroll position.
+
+**Correct:**
 
 ```tsx
-import { QueryClient } from '@tanstack/react-query'
-import { createRouter } from '@tanstack/react-router'
-import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
-import { routeTree } from './routeTree.gen'
-import { DefaultCatchBoundary } from '@/components/DefaultCatchBoundary'
-import { DefaultNotFound } from '@/components/DefaultNotFound'
-
-export function getRouter() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        refetchOnWindowFocus: false,
-        staleTime: 1000 * 60 * 2,
-      },
-    },
-  })
-
-  const router = createRouter({
-    routeTree,
-    context: { queryClient, user: null },
-
-    // Preloading
-    defaultPreload: 'intent',         // Preload on hover/focus
-    defaultPreloadStaleTime: 0,       // Let Query manage freshness
-
-    // Error handling
-    defaultErrorComponent: DefaultCatchBoundary,
-    defaultNotFoundComponent: DefaultNotFound,
-
-    // UX
-    scrollRestoration: true,          // Restore scroll on back/forward
-
-    // Performance
-    defaultStructuralSharing: true,   // Optimize re-renders
-  })
-
-  setupRouterSsrQueryIntegration({
-    router,
-    queryClient,
-  })
-
-  return router
-}
-```
-
-## Good Example: DefaultCatchBoundary Component
-
-```tsx
-// components/DefaultCatchBoundary.tsx
-import { ErrorComponent, useRouter } from '@tanstack/react-router'
-
-export function DefaultCatchBoundary({ error }: { error: Error }) {
-  const router = useRouter()
+function DefaultErrorComponent({ error }: ErrorComponentProps) {
+  const router = useRouter();
+  const queryErrorResetBoundary = useQueryErrorResetBoundary();
 
   return (
-    <div className="error-container">
-      <h1>Something went wrong</h1>
-      <ErrorComponent error={error} />
-      <button onClick={() => router.invalidate()}>
+    <div role="alert">
+      <p>Something went wrong{error instanceof Error ? `: ${error.message}` : '.'}</p>
+      <button
+        onClick={() => {
+          queryErrorResetBoundary.reset();
+          void router.invalidate();
+        }}
+      >
         Try again
       </button>
     </div>
-  )
+  );
 }
-```
 
-## Good Example: DefaultNotFound Component
-
-```tsx
-// components/DefaultNotFound.tsx
-import { Link } from '@tanstack/react-router'
-
-export function DefaultNotFound() {
-  return (
-    <div className="not-found-container">
-      <h1>404 - Page Not Found</h1>
-      <p>The page you're looking for doesn't exist.</p>
-      <Link to="/">Go home</Link>
-    </div>
-  )
-}
-```
-
-## Router Options Reference
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `defaultPreload` | `false \| 'intent' \| 'render' \| 'viewport'` | `false` | When to preload routes |
-| `defaultPreloadStaleTime` | `number` | `30000` | How long preloaded data stays fresh (ms) |
-| `defaultErrorComponent` | `Component` | Built-in | Global error boundary |
-| `defaultNotFoundComponent` | `Component` | Built-in | Global 404 page |
-| `scrollRestoration` | `boolean` | `false` | Restore scroll on navigation |
-| `defaultStructuralSharing` | `boolean` | `true` | Optimize loader data re-renders |
-
-## Good Example: Route-Level Overrides
-
-```tsx
-// Routes can override defaults
-export const Route = createFileRoute('/admin')({
-  // Custom error handling for admin section
-  errorComponent: AdminErrorBoundary,
-  notFoundComponent: AdminNotFound,
-
-  // Disable preload for sensitive routes
-  preload: false,
-})
-```
-
-## Good Example: With Pending Component
-
-```tsx
 const router = createRouter({
   routeTree,
   context: { queryClient },
-
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
-  defaultErrorComponent: DefaultCatchBoundary,
-  defaultNotFoundComponent: DefaultNotFound,
+  defaultErrorComponent: DefaultErrorComponent,
+  defaultNotFoundComponent: () => <p>Page not found.</p>,
   scrollRestoration: true,
-
-  // Show during route transitions
-  defaultPendingComponent: () => (
-    <div className="loading-bar" />
-  ),
-  defaultPendingMinMs: 200,  // Min time to show pending UI
-  defaultPendingMs: 1000,    // Delay before showing pending UI
-})
+});
 ```
 
-## Context
+### Validation
 
-- Set `defaultPreloadStaleTime: 0` when using TanStack Query
-- `scrollRestoration: true` improves back/forward navigation UX
-- `defaultStructuralSharing` prevents unnecessary re-renders
-- Route-level options override router defaults
-- Error/NotFound components receive route context
-- Pending components help with perceived performance
+Hover a link and check in the network panel that the route's data starts loading before the click.
+Force a loader error and check that the default error component appears and its retry refetches.
+Navigate back from a scrolled list and check that the scroll position returns.
 
-Source: [TanStack Agent Skills - tanstack-router/router-default-options.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/router-default-options.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A route-level override of a default, such as `preload: false` on a route with side effects, is not a violation.

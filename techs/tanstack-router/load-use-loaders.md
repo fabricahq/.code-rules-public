@@ -1,157 +1,103 @@
 ---
-title: "load-use-loaders: Use Route Loaders for Data Fetching"
-whenToRead: "Before fetching data needed when a TanStack Router route first renders or preloads."
+title: "Load route data in loaders, in parallel"
+whenToRead: "Before planning, writing, changing, or reviewing how a TanStack Router route fetches its data, including loaders, beforeLoad, and components that fetch on mount."
 impact: "HIGH"
-impactDescription: "prevents component-fetch waterfalls and enables route preloading"
-tags: "tanstack-router, loaders, data-fetching, preloading, waterfalls"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-use-loaders.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-router/rules/load-use-loaders.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Fetching in components or in beforeLoad starts requests late or in sequence, which adds loading states and waterfalls to every navigation."
+tags: "tanstack-router, loaders, beforeLoad, data-loading, waterfalls"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-use-loaders.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule load-use-loaders (MIT, notice retained in NOTICE.md): merged the parallel-loading rule, restructured to the rule template, and corrected the claim that child loaders wait for parent loaders."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-parallel.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule load-parallel (MIT, notice retained in NOTICE.md): merged the parallel-loading rule, restructured to the rule template, and corrected the claim that child loaders wait for parent loaders."
 ---
 
-## load-use-loaders: Use Route Loaders for Data Fetching
+## Load route data in loaders, in parallel
 
-## Explanation
+Fetch the data a route needs in its `loader`, start independent requests together, and keep `beforeLoad` for checks and context that must come first, such as authentication and redirects.
 
-Route loaders execute before the route renders, enabling data to be ready when the component mounts. This prevents loading waterfalls, enables preloading, and integrates with the router's caching layer.
+### Implementation
 
-## Bad Example
+- Put data fetching in `loader`, not in a component Effect, so it starts during navigation and can run on preload.
+- Start independent requests in a loader together with `Promise.all`; await in sequence only when one request needs another's result.
+- Keep `beforeLoad` short.
+  `beforeLoad` functions run in order from parent to child, and loaders run after all of them, so a slow `beforeLoad` delays every loader below it.
+- Rely on the router to run the loaders of nested matched routes in parallel; a child loader does not wait for its parent's loader.
+- Pass the loader's `abortController.signal` to requests that should stop when the navigation is superseded.
+- When the app uses TanStack Query, have loaders fill the Query cache instead of returning data directly.
+
+### Rationale
+
+A component that fetches on mount starts its request only after the route renders, so every navigation shows a loading state and nested components fetch in a chain.
+Loaders start work as soon as the route matches, and the router runs matched routes' loaders concurrently.
+`beforeLoad` is sequential by design, so data fetching placed there becomes a waterfall.
+
+### Examples
+
+#### Application: Fetching in a component
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Fetching in component - creates waterfall
 function PostsPage() {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+  const [posts, setPosts] = useState<Array<Post>>([]);
 
   useEffect(() => {
-    // Route renders, THEN data fetches, THEN UI updates
-    fetchPosts().then((data) => {
-      setPosts(data)
-      setLoading(false)
-    })
-  }, [])
-
-  if (loading) return <Loading />
-  return <PostList posts={posts} />
+    fetchPosts().then(setPosts);
+  }, []);
+  // ...
 }
-
-// No preloading possible - user sees loading state on navigation
 ```
 
-## Good Example
+The request starts only after the page renders, and it cannot run on hover preload.
+
+**Correct:**
 
 ```tsx
-// routes/posts.tsx
-import { createFileRoute } from '@tanstack/react-router'
-
 export const Route = createFileRoute('/posts')({
-  loader: async () => {
-    const posts = await fetchPosts()
-    return { posts }
-  },
+  loader: () => fetchPosts(),
   component: PostsPage,
-})
+});
 
 function PostsPage() {
-  // Data is ready when component mounts - no loading state needed
-  const { posts } = Route.useLoaderData()
-  return <PostList posts={posts} />
+  const posts = Route.useLoaderData();
+  // ...
 }
 ```
 
-## Good Example: With Parameters
+#### Application: Data fetched in beforeLoad or in sequence
+
+**Incorrect (counterexample):**
 
 ```tsx
-// routes/posts/$postId.tsx
-export const Route = createFileRoute('/posts/$postId')({
-  loader: async ({ params }) => {
-    // params are type-safe and guaranteed to exist
-    const post = await fetchPost(params.postId)
-    const comments = await fetchComments(params.postId)
-    return { post, comments }
+export const Route = createFileRoute('/dashboard')({
+  beforeLoad: async () => {
+    const user = await fetchUser();
+    const stats = await fetchStats(user.id);
+    const activity = await fetchActivity(user.id);
+    return { user, stats, activity };
   },
-  component: PostDetailPage,
-})
-
-function PostDetailPage() {
-  const { post, comments } = Route.useLoaderData()
-  const { postId } = Route.useParams()
-
-  return (
-    <article>
-      <h1>{post.title}</h1>
-      <PostContent content={post.content} />
-      <CommentList comments={comments} />
-    </article>
-  )
-}
+});
 ```
 
-## Good Example: With TanStack Query
+Every child route's `beforeLoad` and loader waits for three sequential requests.
+
+**Correct:**
 
 ```tsx
-// routes/posts/$postId.tsx
-import { queryOptions } from '@tanstack/react-query'
-
-const postQueryOptions = (postId: string) =>
-  queryOptions({
-    queryKey: ['posts', postId],
-    queryFn: () => fetchPost(postId),
-  })
-
-export const Route = createFileRoute('/posts/$postId')({
-  loader: async ({ params, context: { queryClient } }) => {
-    // Ensure data is in cache before render
-    await queryClient.ensureQueryData(postQueryOptions(params.postId))
+export const Route = createFileRoute('/dashboard')({
+  beforeLoad: async () => ({ user: await fetchUser() }),
+  loader: async ({ context }) => {
+    const [stats, activity] = await Promise.all([fetchStats(context.user.id), fetchActivity(context.user.id)]);
+    return { stats, activity };
   },
-  component: PostDetailPage,
-})
-
-function PostDetailPage() {
-  const { postId } = Route.useParams()
-  // useSuspenseQuery because loader guarantees data exists
-  const { data: post } = useSuspenseQuery(postQueryOptions(postId))
-
-  return <PostContent post={post} />
-}
+});
 ```
 
-## Loader Context Properties
+`beforeLoad` provides only the user that child routes need, and the loader fetches the rest in parallel.
 
-```tsx
-export const Route = createFileRoute('/posts')({
-  loader: async ({
-    params,       // Route path parameters
-    context,      // Route context (queryClient, auth, etc.)
-    abortController, // For cancelling stale requests
-    cause,        // 'enter' | 'preload' | 'stay'
-    deps,         // Dependencies from loaderDeps
-    preload,      // Boolean: true if preloading
-  }) => {
-    // Use abortController for fetch cancellation
-    const response = await fetch('/api/posts', {
-      signal: abortController.signal,
-    })
+### Validation
 
-    // Different behavior for preload vs navigation
-    if (preload) {
-      // Lighter data for preload
-      return { posts: await response.json() }
-    }
+Navigate to the route with network throttling and check that its requests start during navigation, not after render, and that independent requests overlap.
+Search `beforeLoad` functions for data fetching that child routes do not need.
 
-    // Full data for actual navigation
-    const posts = await response.json()
-    const stats = await fetchStats()
-    return { posts, stats }
-  },
-})
-```
-
-## Context
-
-- Loaders run during route matching, before component render
-- Supports parallel loading across nested routes
-- Enables preloading on link hover/focus
-- Built-in stale-while-revalidate caching
-- For complex caching needs, integrate with TanStack Query
-- Use `beforeLoad` for auth checks and redirects
-
-Source: [TanStack Agent Skills - tanstack-router/load-use-loaders.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-use-loaders.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Fetching in `beforeLoad` is not a violation when child routes need the result, such as the current user for an authorization check.

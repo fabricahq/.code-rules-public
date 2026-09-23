@@ -1,162 +1,99 @@
 ---
-title: "load-ensure-query-data: Use ensureQueryData with TanStack Query"
-whenToRead: "Before choosing how a TanStack Router loader should populate or read TanStack Query data."
+title: "With TanStack Query, load route data into the Query cache"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Router loaders or route components in an app that also uses TanStack Query, or router options that control preload caching."
 impact: "HIGH"
-impactDescription: "keeps route loaders and TanStack Query cache behavior aligned"
-tags: "tanstack-router, tanstack-query, loaders, ensure-query-data, cache"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-ensure-query-data.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-router/rules/load-ensure-query-data.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Returning data from loaders alongside Query hooks creates two caches that disagree, and misusing prefetchQuery lets routes render before their data is ready."
+tags: "tanstack-router, tanstack-query, loaders, ensureQueryData, cache"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-integration/rules/flow-loader-query-pattern.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule flow-loader-query-pattern (MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-ensure-query-data.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule load-ensure-query-data (MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-integration/rules/cache-single-source.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-single-source (MIT, notice retained in NOTICE.md): merged three overlapping rules on loader and Query integration, restructured to the rule template, and corrected ensureQueryData, which returns cached data even when stale."
 ---
 
-## load-ensure-query-data: Use ensureQueryData with TanStack Query
+## With TanStack Query, load route data into the Query cache
 
-## Explanation
+When an app uses TanStack Query, make it the only cache for server data: loaders call `queryClient.ensureQueryData` with the same query options the component reads, and components read with `useSuspenseQuery`.
+Set `defaultPreloadStaleTime: 0` so the router always runs loaders and Query decides whether to fetch.
 
-When integrating TanStack Router with TanStack Query, use `queryClient.ensureQueryData()` in loaders instead of `prefetchQuery()`. This respects the cache, awaits data if missing, and returns the data for potential use.
+### Implementation
 
-## Bad Example
+- Define query options once, such as in a `queryOptions` factory, and use them in both the loader and the component.
+- In the loader, await `ensureQueryData` for data the route cannot render without, and start them together with `Promise.all`.
+- Start non-critical data with `prefetchQuery` without awaiting it, and read it with `useQuery` so the component can show a loading state for that part.
+- In the component, read critical data with `useSuspenseQuery`; it finds the data the loader cached.
+- `ensureQueryData` returns cached data even when it is stale.
+  Pass `revalidateIfStale: true` to also refetch stale data in the background, or rely on the component's query to refetch according to `staleTime`.
+- `prefetchQuery` never throws and returns nothing; use it only when the route can render without the result.
+- Set `defaultPreloadStaleTime: 0` on the router, so preloads and navigations always call the loader and TanStack Query's `staleTime` controls freshness.
+- Do not also return the fetched data from the loader for the component to read; read it from Query.
+
+### Rationale
+
+TanStack Router has its own loader cache, and TanStack Query has another.
+If loaders return fetched data while components also query it, the two copies go stale on different schedules and mutations update only one.
+Loading into Query's cache keeps one source of truth, while the loader still starts the fetch early and on preload.
+
+### Examples
+
+#### Application: Two caches
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Using prefetchQuery - doesn't return data, can't await stale check
-export const Route = createFileRoute('/posts/$postId')({
-  loader: async ({ params, context: { queryClient } }) => {
-    // prefetchQuery never throws, swallows errors
-    queryClient.prefetchQuery({
-      queryKey: ['posts', params.postId],
-      queryFn: () => fetchPost(params.postId),
-    })
-    // No await - might not complete before render
-    // No return value to use
-  },
-})
-
-// Fetching directly - bypasses TanStack Query cache
 export const Route = createFileRoute('/posts')({
-  loader: async () => {
-    const posts = await fetchPosts()  // Not cached
-    return { posts }
-  },
-})
-```
+  loader: () => fetchPosts(),
+  component: PostsPage,
+});
 
-## Good Example
-
-```tsx
-// Define queryOptions for reuse
-const postQueryOptions = (postId: string) =>
-  queryOptions({
-    queryKey: ['posts', postId],
-    queryFn: () => fetchPost(postId),
-    staleTime: 5 * 60 * 1000,  // 5 minutes
-  })
-
-export const Route = createFileRoute('/posts/$postId')({
-  loader: async ({ params, context: { queryClient } }) => {
-    // ensureQueryData:
-    // - Returns cached data if fresh
-    // - Fetches and caches if missing or stale
-    // - Awaits completion
-    // - Throws on error (caught by error boundary)
-    await queryClient.ensureQueryData(postQueryOptions(params.postId))
-  },
-  component: PostPage,
-})
-
-function PostPage() {
-  const { postId } = Route.useParams()
-
-  // Data guaranteed to exist from loader
-  const { data: post } = useSuspenseQuery(postQueryOptions(postId))
-
-  return <PostContent post={post} />
+function PostsPage() {
+  const { data } = useQuery({ queryKey: ['posts'], queryFn: fetchPosts });
+  // ...
 }
 ```
 
-## Good Example: Multiple Parallel Queries
+The loader's copy lives in the router cache and the component's copy in Query, so they are fetched twice and can disagree.
+
+**Correct:**
 
 ```tsx
-export const Route = createFileRoute('/dashboard')({
-  loader: async ({ context: { queryClient } }) => {
-    // Parallel data fetching
-    await Promise.all([
-      queryClient.ensureQueryData(statsQueries.overview()),
-      queryClient.ensureQueryData(activityQueries.recent()),
-      queryClient.ensureQueryData(notificationQueries.unread()),
-    ])
-  },
-})
-```
-
-## Good Example: Dependent Queries
-
-```tsx
-export const Route = createFileRoute('/users/$userId/posts')({
+export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params, context: { queryClient } }) => {
-    // First query needed for second
-    const user = await queryClient.ensureQueryData(
-      userQueries.detail(params.userId)
-    )
-
-    // Dependent query uses result
-    await queryClient.ensureQueryData(
-      postQueries.byAuthor(user.id)
-    )
+    void queryClient.prefetchQuery(commentQueries.forPost(params.postId));
+    await queryClient.ensureQueryData(postQueries.detail(params.postId));
   },
-})
+  component: PostPage,
+});
+
+function PostPage() {
+  const { postId } = Route.useParams();
+  const { data: post } = useSuspenseQuery(postQueries.detail(postId));
+  const comments = useQuery(commentQueries.forPost(postId));
+  // ...
+}
 ```
 
-## Router Configuration for TanStack Query
+`postQueries` and `commentQueries` are query options factories.
+The post is required before render, while comments load in parallel and show their own loading state.
+
+#### Application: Router preload caching
+
+**Correct:**
 
 ```tsx
-// router.tsx
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,  // 1 minute default
-    },
-  },
-})
-
-export const router = createRouter({
+const router = createRouter({
   routeTree,
   context: { queryClient },
-
-  // Let TanStack Query manage caching
+  defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
-
-  // SSR: Dehydrate query cache
-  dehydrate: () => ({
-    queryClientState: dehydrate(queryClient),
-  }),
-
-  // SSR: Hydrate on client
-  hydrate: (dehydrated) => {
-    hydrate(queryClient, dehydrated.queryClientState)
-  },
-
-  // Wrap with QueryClientProvider
-  Wrap: ({ children }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  ),
-})
+});
 ```
 
-## ensureQueryData vs prefetchQuery vs fetchQuery
+### Validation
 
-| Method | Returns | Throws | Awaits | Use Case |
-|--------|---------|--------|--------|----------|
-| `ensureQueryData` | Data | Yes | Yes | Route loaders (recommended) |
-| `prefetchQuery` | void | No | Yes | Background prefetching |
-| `fetchQuery` | Data | Yes | Yes | When you need data immediately |
+Check that loaders call `ensureQueryData` or `prefetchQuery` with the same query options their components read, and that loaders return no server data for components to read directly.
+Check that the router sets `defaultPreloadStaleTime: 0`.
 
-## Context
-
-- `ensureQueryData` is the recommended method for route loaders
-- Respects `staleTime` - won't refetch fresh cached data
-- Errors propagate to route error boundaries
-- Use `queryOptions()` factory for type-safe, reusable query definitions
-- Set `defaultPreloadStaleTime: 0` to let TanStack Query manage cache
-- Pair with `useSuspenseQuery` in components for guaranteed data
-
-Source: [TanStack Agent Skills - tanstack-router/load-ensure-query-data.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/load-ensure-query-data.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Returning route-only values that are not server data, such as a computed page title, is not a violation.
