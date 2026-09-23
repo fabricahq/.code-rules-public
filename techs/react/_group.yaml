@@ -1,0 +1,3 @@
+name: React
+description: Build accessible, correct, maintainable, and responsive React interfaces, including framework-specific server features when they apply.
+whenToRead: Before planning, implementing, changing, reviewing, or diagnosing React components, Hooks, state, rendering, client performance, or server-rendered React behavior.

@@ -4,7 +4,7 @@ whenToRead: "When handling external data or values whose runtime shape is not ye
 impact: "HIGH"
 impactDescription: "Prevents unchecked data from bypassing TypeScript and failing later at runtime."
 tags: "typescript"
-attribution: [{"url": "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx", "description": "Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
+attribution: [{"url":"https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx","description":"Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
 ---
 
 ## Narrow unknown values before use
