@@ -1,0 +1,3 @@
+name: TanStack Router
+description: Define typed routes, loading, navigation, and search behavior with TanStack Router.
+whenToRead: Before planning, implementing, reviewing, or debugging TanStack Router routes, loaders, navigation, search params, or Query integration.
