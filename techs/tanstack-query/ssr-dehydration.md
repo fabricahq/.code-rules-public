@@ -1,167 +1,78 @@
 ---
-title: "ssr-dehydration: Use Dehydrate/Hydrate Pattern for SSR"
-whenToRead: "Before rendering TanStack Query data on a server and transferring prefetched cache state to the browser."
-impact: "MEDIUM"
-impactDescription: "prevents SSR content flashes and duplicate client requests through cache hydration"
-tags: "tanstack-query, ssr, dehydrate, hydrate, hydration"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/ssr-dehydration.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/ssr-dehydration.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+title: "Prefetch on the server and hydrate the query cache"
+whenToRead: "Before planning, writing, changing, or reviewing server rendering or route loaders in an app that reads data with TanStack Query, such as Next.js pages, TanStack Start routes, or a custom SSR setup."
+impact: "MEDIUM-HIGH"
+impactDescription: "Passing server data around the query cache causes duplicate client fetches and loading flashes, and a shared server QueryClient can leak one user's data to another."
+tags: "tanstack-query, ssr, hydration, dehydrate"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/ssr-dehydration.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule ssr-dehydration (MIT, notice retained in NOTICE.md): restructured to the rule template, added the client staleTime requirement, and described safe serialization."
 ---
 
-## ssr-dehydration: Use Dehydrate/Hydrate Pattern for SSR
+## Prefetch on the server and hydrate the query cache
 
-## Explanation
+When a page is server-rendered, prefetch its queries into a `QueryClient` created for that request, dehydrate the cache, and hydrate it on the client, so components read the same cached data with no second fetch.
 
-For server-side rendering, prefetch queries on the server, dehydrate the cache to a serializable format, send it to the client, and hydrate on the client. This prevents content flash and duplicate requests.
+### Implementation
 
-## Bad Example
+- Create a new `QueryClient` for each request on the server; never share one across requests.
+- Prefetch with the same query options factories that client components use, so the keys match.
+- Pass `dehydrate(queryClient)` to `HydrationBoundary`, or to your framework's equivalent, around the components that read the data.
+- Set a default `staleTime` above zero on the client `QueryClient`, so hydrated data is not refetched immediately.
+- When serializing dehydrated state into HTML yourself, use a serializer that escapes it for a script tag; plain `JSON.stringify` output can break out of the tag.
+- Only successful queries are dehydrated by default; configure `shouldDehydrateQuery` when you need others.
+- In a router with loaders, such as TanStack Start, call `ensureQueryData` in the loader and read with `useSuspenseQuery` in the component.
+
+### Rationale
+
+Data fetched on the server outside the query cache, such as through props, is invisible to TanStack Query, so the client fetches it again and components juggle two sources.
+Dehydrating puts the server's results into the client cache under the same keys.
+A server `QueryClient` shared across requests keeps one user's data in memory where another request can read it.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// No SSR data passing - client refetches everything
-// server-side
 export async function getServerSideProps() {
-  const data = await fetchPosts()
-  return { props: { posts: data } }  // Bypasses React Query cache
+  return { props: { posts: await fetchPosts() } };
 }
 
-// client-side
-function PostsPage({ posts }: { posts: Post[] }) {
-  // This doesn't benefit from the server fetch
-  const { data } = useQuery({
-    queryKey: ['posts'],
-    queryFn: fetchPosts,
-    // Will refetch on client, causing flash
-  })
-
-  return <PostList posts={data ?? posts} />  // Awkward fallback pattern
+function PostsPage({ posts }: { posts: Array<Post> }) {
+  const { data } = useQuery({ queryKey: ['posts'], queryFn: fetchPosts });
+  return <PostList posts={data ?? posts} />;
 }
 ```
 
-## Good Example: Next.js App Router
+The client fetches the posts again, and the component has to choose between two sources.
+
+**Correct (Next.js App Router):**
 
 ```tsx
-// app/posts/page.tsx
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from '@tanstack/react-query'
-import { postQueries } from '@/lib/queries'
-
 export default async function PostsPage() {
-  const queryClient = new QueryClient()
-
-  await queryClient.prefetchQuery(postQueries.list())
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery(postQueries.list());
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <PostList />
     </HydrationBoundary>
-  )
+  );
 }
+```
 
-// components/PostList.tsx
-'use client'
-
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { postQueries } from '@/lib/queries'
+```tsx
+'use client';
 
 export function PostList() {
-  const { data: posts } = useSuspenseQuery(postQueries.list())
-
-  return (
-    <ul>
-      {posts.map(post => (
-        <li key={post.id}>{post.title}</li>
-      ))}
-    </ul>
-  )
+  const { data: posts } = useSuspenseQuery(postQueries.list());
+  return <ul>{posts.map((post) => <li key={post.id}>{post.title}</li>)}</ul>;
 }
 ```
 
-## Good Example: TanStack Start/Router
+### Validation
 
-```tsx
-// routes/posts.tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { postQueries } from '@/lib/queries'
+Load a server-rendered page and check in the network panel that the client does not refetch hydrated queries immediately.
+Check that each request creates its own `QueryClient`.
 
-export const Route = createFileRoute('/posts')({
-  loader: async ({ context: { queryClient } }) => {
-    // Prefetch in route loader
-    await queryClient.ensureQueryData(postQueries.list())
-  },
-  component: PostsPage,
-})
-
-function PostsPage() {
-  const { data: posts } = useSuspenseQuery(postQueries.list())
-  return <PostList posts={posts} />
-}
-```
-
-## Good Example: Manual SSR Setup
-
-```tsx
-// server.tsx
-import { dehydrate, QueryClient } from '@tanstack/react-query'
-import { renderToString } from 'react-dom/server'
-
-export async function render(url: string) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60 * 1000,  // Prevent immediate client refetch
-      },
-    },
-  })
-
-  // Prefetch required data
-  await queryClient.prefetchQuery({
-    queryKey: ['posts'],
-    queryFn: fetchPosts,
-  })
-
-  const dehydratedState = dehydrate(queryClient)
-
-  const html = renderToString(
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  )
-
-  // Serialize safely - JSON.stringify is XSS vulnerable
-  const serializedState = serialize(dehydratedState)
-
-  return `
-    <html>
-      <body>
-        <div id="app">${html}</div>
-        <script>window.__DEHYDRATED_STATE__ = ${serializedState}</script>
-      </body>
-    </html>
-  `
-}
-
-// client.tsx
-import { hydrate, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
-const queryClient = new QueryClient()
-hydrate(queryClient, window.__DEHYDRATED_STATE__)
-
-hydrateRoot(
-  document.getElementById('app'),
-  <QueryClientProvider client={queryClient}>
-    <App />
-  </QueryClientProvider>
-)
-```
-
-## Context
-
-- Create new QueryClient per request to prevent data sharing between users
-- Set `staleTime > 0` on server to prevent immediate client refetch
-- Use a safe serializer (not JSON.stringify) to prevent XSS
-- Failed queries aren't dehydrated by default; use `shouldDehydrateQuery` to override
-- `HydrationBoundary` can be nested for route-level prefetching
-
-Source: [TanStack Agent Skills - tanstack-query/ssr-dehydration.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/ssr-dehydration.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A page that fetches only on the client, with no server rendering of that data, does not need dehydration.

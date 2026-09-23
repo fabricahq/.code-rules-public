@@ -1,161 +1,64 @@
 ---
-title: "parallel-use-queries: Use useQueries for Dynamic Parallel Queries"
-whenToRead: "Before fetching a dynamic collection of independent queries in parallel with TanStack Query."
+title: "Fetch a dynamic set of queries with useQueries"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Query code that fetches one query per item in a list whose length or contents change, such as details for a set of IDs."
 impact: "MEDIUM"
-impactDescription: "runs dynamic query sets concurrently without violating hook ordering"
-tags: "tanstack-query, parallel-queries, use-queries, hooks, performance"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/parallel-use-queries.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/parallel-use-queries.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Fetching per-item data in a loop of awaits or Hooks either serializes requests or breaks the Rules of Hooks."
+tags: "tanstack-query, useQueries, parallel"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/parallel-use-queries.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule parallel-use-queries (MIT, notice retained in NOTICE.md): restructured to the rule template, simplified the dependent example, and noted combine stability."
 ---
 
-## parallel-use-queries: Use useQueries for Dynamic Parallel Queries
+## Fetch a dynamic set of queries with useQueries
 
-## Explanation
+When the number of queries depends on data, such as one query per ID, use `useQueries`, or `useSuspenseQueries` with Suspense, instead of calling `useQuery` in a loop or fetching sequentially in an Effect.
 
-When you need to fetch multiple queries in parallel where the number or identity of queries is dynamic (e.g., fetching details for a list of IDs), use `useQueries`. It handles parallel execution and returns an array of query results.
+### Implementation
 
-## Bad Example
+- Map the items to query options, preferably from the entity's `queryOptions` factory, so each item shares the cache with other reads of the same entity.
+- Use `combine` to turn the results into the shape the component needs, such as an array of data plus one pending flag.
+  Define `combine` outside the component or memoize it when it does expensive work, because it re-runs when its reference changes.
+- An empty list of queries is valid and returns an empty result.
+- When the list of items comes from another query, build the second list from the first query's data; an empty list simply waits.
+- When a single endpoint can return all items at once, one query for the batch may be better than many small requests.
+
+### Rationale
+
+Hooks cannot be called in a loop, and awaiting requests one by one in an Effect turns them into a waterfall.
+`useQueries` runs all the queries in parallel, caches each one under its own key, and lets other components reuse those entries.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Sequential fetching with useEffect - waterfall
-function UserProfiles({ userIds }: { userIds: string[] }) {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchAll() {
-      const results = []
-      for (const id of userIds) {
-        const user = await fetchUser(id)  // Sequential!
-        results.push(user)
-      }
-      setUsers(results)
-      setLoading(false)
-    }
-    fetchAll()
-  }, [userIds])
-
-  // N requests run one after another
-}
-
-// Multiple useQuery calls - breaks rules of hooks
-function UserProfiles({ userIds }: { userIds: string[] }) {
-  // Can't call hooks in a loop!
-  const queries = userIds.map(id => useQuery({
-    queryKey: ['user', id],
-    queryFn: () => fetchUser(id),
-  }))
+function UserProfiles({ userIds }: { userIds: ReadonlyArray<string> }) {
+  const users = userIds.map((id) => useQuery({ queryKey: ['users', id], queryFn: () => fetchUser(id) }));
+  // ...
 }
 ```
 
-## Good Example
+The number of Hook calls changes with the list, which breaks the Rules of Hooks.
+
+**Correct:**
 
 ```tsx
-import { useQueries } from '@tanstack/react-query'
-
-function UserProfiles({ userIds }: { userIds: string[] }) {
-  const userQueries = useQueries({
-    queries: userIds.map(id => ({
-      queryKey: ['users', id],
-      queryFn: () => fetchUser(id),
-      staleTime: 5 * 60 * 1000,
-    })),
-  })
-
-  const isLoading = userQueries.some(q => q.isLoading)
-  const isError = userQueries.some(q => q.isError)
-  const users = userQueries.map(q => q.data).filter(Boolean)
-
-  if (isLoading) return <Loading />
-  if (isError) return <Error />
-
-  return (
-    <ul>
-      {users.map(user => (
-        <li key={user.id}>{user.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-## Good Example: With Combine Option
-
-```tsx
-function UserProfiles({ userIds }: { userIds: string[] }) {
-  const { data: users, isPending } = useQueries({
-    queries: userIds.map(id => ({
-      queryKey: ['users', id],
-      queryFn: () => fetchUser(id),
-    })),
-    // Combine results into single value
+function UserProfiles({ userIds }: { userIds: ReadonlyArray<string> }) {
+  const { users, isPending } = useQueries({
+    queries: userIds.map((id) => userQueries.detail(id)),
     combine: (results) => ({
-      data: results.map(r => r.data).filter(Boolean),
-      isPending: results.some(r => r.isPending),
-      isError: results.some(r => r.isError),
+      users: results.flatMap((result) => (result.data ? [result.data] : [])),
+      isPending: results.some((result) => result.isPending),
     }),
-  })
-
-  if (isPending) return <Loading />
-
-  return <UserList users={users} />
+  });
+  // ...
 }
 ```
 
-## Good Example: Dependent Parallel Queries
+`userQueries.detail` is the user entity's query options factory.
 
-```tsx
-function PostsWithAuthors({ postIds }: { postIds: string[] }) {
-  // First: fetch all posts in parallel
-  const postQueries = useQueries({
-    queries: postIds.map(id => ({
-      queryKey: ['posts', id],
-      queryFn: () => fetchPost(id),
-    })),
-  })
+### Validation
 
-  const posts = postQueries.map(q => q.data).filter(Boolean)
-  const authorIds = [...new Set(posts.map(p => p.authorId))]
+Check that per-item queries run in parallel in the network panel, and that no Hook is called inside a loop.
 
-  // Then: fetch all unique authors in parallel
-  const authorQueries = useQueries({
-    queries: authorIds.map(id => ({
-      queryKey: ['users', id],
-      queryFn: () => fetchUser(id),
-      enabled: posts.length > 0,  // Wait for posts
-    })),
-  })
-
-  // Combine data...
-}
-```
-
-## Good Example: With Suspense
-
-```tsx
-import { useSuspenseQueries } from '@tanstack/react-query'
-
-function UserProfiles({ userIds }: { userIds: string[] }) {
-  const userQueries = useSuspenseQueries({
-    queries: userIds.map(id => ({
-      queryKey: ['users', id],
-      queryFn: () => fetchUser(id),
-    })),
-  })
-
-  // All data guaranteed - no loading states needed
-  const users = userQueries.map(q => q.data)
-
-  return <UserList users={users} />
-}
-```
-
-## Context
-
-- Queries run in parallel, not sequentially
-- Each query is cached independently
-- Use `combine` to transform results array into single value
-- Empty queries array is valid (returns empty results)
-- Pairs well with `useSuspenseQueries` for guaranteed data
-- Individual query options (staleTime, etc.) apply per-query
-
-Source: [TanStack Agent Skills - tanstack-query/parallel-use-queries.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/parallel-use-queries.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+One query that fetches a whole batch from a batch endpoint is not a violation.

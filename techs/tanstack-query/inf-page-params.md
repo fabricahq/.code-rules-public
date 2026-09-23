@@ -1,141 +1,63 @@
 ---
-title: "inf-page-params: Always Provide getNextPageParam for Infinite Queries"
-whenToRead: "Before implementing or reviewing pagination with useInfiniteQuery and next-page parameters."
+title: "Derive infinite query page params from the server's response"
+whenToRead: "Before planning, writing, changing, or reviewing a TanStack Query useInfiniteQuery, such as infinite scrolling, load-more buttons, or chat history."
 impact: "MEDIUM"
-impactDescription: "keeps infinite pagination moving forward with a clear stop condition"
-tags: "tanstack-query, infinite-query, pagination, get-next-page-param, page-params"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/inf-page-params.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/inf-page-params.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Guessing whether more pages exist from page size fetches an extra empty page or stops early."
+tags: "tanstack-query, infinite-queries, pagination"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/inf-page-params.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule inf-page-params (MIT, notice retained in NOTICE.md): reframed from providing getNextPageParam, which TypeScript already requires, to deriving it from the server's response; restructured to the rule template."
 ---
 
-## inf-page-params: Always Provide getNextPageParam for Infinite Queries
+## Derive infinite query page params from the server's response
 
-## Explanation
+Have `getNextPageParam` return the next cursor or page from what the server says, and return `undefined` or `null` when the server says there are no more pages.
 
-`useInfiniteQuery` requires `getNextPageParam` to determine how to fetch subsequent pages. This function receives the last page's data and must return the next page parameter, or `undefined` when there are no more pages.
+### Implementation
 
-## Bad Example
+- Prefer an API that returns a next cursor, or an explicit `hasMore` or total count.
+- Return `undefined` or `null` from `getNextPageParam` when there is no next page; that sets `hasNextPage` to `false`.
+- Avoid inferring the end from `lastPage.length < pageSize`; when the last page is exactly full, it fetches one extra empty page.
+- Include filters in the query key, so changing them starts a new list instead of appending to the old one.
+- Set `maxPages` for very long feeds to bound memory, and provide `getPreviousPageParam` when pages can be dropped from the start.
+- Disable the load-more control while `isFetchingNextPage` is true.
+
+### Rationale
+
+The server knows whether more data exists; the client can only guess from page sizes.
+A guess based on a full last page requests a page that turns out empty, and a guess that assumes short pages mean the end stops early when the server returns a short page for another reason.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Missing getNextPageParam - can't load more pages
-const { data, fetchNextPage } = useInfiniteQuery({
-  queryKey: ['posts'],
-  queryFn: ({ pageParam }) => fetchPosts(pageParam),
-  initialPageParam: 1,
-  // Missing getNextPageParam - fetchNextPage won't work correctly
-})
-```
-
-## Good Example: Offset-Based Pagination
-
-```tsx
-const {
-  data,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-} = useInfiniteQuery({
+useInfiniteQuery({
   queryKey: ['posts'],
   queryFn: ({ pageParam }) => fetchPosts({ page: pageParam, limit: 20 }),
   initialPageParam: 1,
-  getNextPageParam: (lastPage, allPages) => {
-    // Return next page number, or undefined if no more pages
-    if (lastPage.length < 20) {
-      return undefined  // No more pages
-    }
-    return allPages.length + 1
-  },
-})
+  getNextPageParam: (lastPage, allPages) => (lastPage.length < 20 ? undefined : allPages.length + 1),
+});
 ```
 
-## Good Example: Cursor-Based Pagination
+If there are exactly 40 posts, the query fetches a third, empty page before stopping.
+
+**Correct:**
 
 ```tsx
-interface PostsResponse {
-  posts: Post[]
-  nextCursor: string | null
-}
-
-const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-  queryKey: ['posts'],
-  queryFn: ({ pageParam }): Promise<PostsResponse> =>
-    fetchPosts({ cursor: pageParam }),
-  initialPageParam: undefined as string | undefined,
-  getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-})
+useInfiniteQuery({
+  queryKey: ['posts', { filter }],
+  queryFn: ({ pageParam }) => fetchPosts({ cursor: pageParam, filter }),
+  initialPageParam: null as string | null,
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+});
 ```
 
-## Good Example: Bi-directional Pagination
+The server's `nextCursor` is `null` when there are no more posts.
 
-```tsx
-const { data, fetchNextPage, fetchPreviousPage, hasNextPage, hasPreviousPage } =
-  useInfiniteQuery({
-    queryKey: ['messages', chatId],
-    queryFn: ({ pageParam }) => fetchMessages({ chatId, cursor: pageParam }),
-    initialPageParam: { direction: 'initial' } as PageParam,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? { cursor: lastPage.nextCursor, direction: 'next' } : undefined,
-    getPreviousPageParam: (firstPage) =>
-      firstPage.hasPrevious
-        ? { cursor: firstPage.prevCursor, direction: 'prev' }
-        : undefined,
-  })
-```
+### Validation
 
-## Good Example: With Total Count
+Test with a result count that is an exact multiple of the page size and check that no empty page is requested.
+Change a filter and check that the list restarts.
 
-```tsx
-interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-}
-
-const { data, hasNextPage } = useInfiniteQuery({
-  queryKey: ['products', filters],
-  queryFn: ({ pageParam }) =>
-    fetchProducts({ ...filters, page: pageParam, pageSize: 20 }),
-  initialPageParam: 1,
-  getNextPageParam: (lastPage) => {
-    const totalPages = Math.ceil(lastPage.total / lastPage.pageSize)
-    if (lastPage.page < totalPages) {
-      return lastPage.page + 1
-    }
-    return undefined
-  },
-})
-```
-
-## Accessing Flattened Data
-
-```tsx
-// data.pages is an array of page responses
-// Flatten for easier iteration
-const allPosts = data?.pages.flatMap(page => page.posts) ?? []
-
-return (
-  <div>
-    {allPosts.map(post => (
-      <PostCard key={post.id} post={post} />
-    ))}
-    {hasNextPage && (
-      <button
-        onClick={() => fetchNextPage()}
-        disabled={isFetchingNextPage}
-      >
-        {isFetchingNextPage ? 'Loading...' : 'Load More'}
-      </button>
-    )}
-  </div>
-)
-```
-
-## Context
-
-- `getNextPageParam` returning `undefined` sets `hasNextPage` to `false`
-- For bi-directional scrolling, also provide `getPreviousPageParam`
-- `initialPageParam` is required and sets the first page parameter
-- Use `maxPages` option to limit stored pages for memory management
-- Consider `select` to transform page structure for component consumption
-
-Source: [TanStack Agent Skills - tanstack-query/inf-page-params.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/inf-page-params.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Page-size inference is not a violation when the API offers nothing better and an extra empty request is acceptable.

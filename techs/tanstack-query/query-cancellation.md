@@ -1,180 +1,65 @@
 ---
-title: "query-cancellation: Implement Query Cancellation Properly"
-whenToRead: "Before implementing TanStack Query fetches that should stop when requests become obsolete or components unmount."
+title: "Pass the query's AbortSignal to the request"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Query query functions that make network requests or long-running work, especially search-as-you-type, fast navigation, or optimistic updates."
 impact: "MEDIUM"
-impactDescription: "cancels obsolete in-flight requests to avoid wasted work and stale responses"
-tags: "tanstack-query, cancellation, abort-signal, fetch, performance"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/query-cancellation.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/query-cancellation.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Requests that ignore the query's AbortSignal keep running after they become obsolete, wasting bandwidth and server work."
+tags: "tanstack-query, cancellation, AbortSignal"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/query-cancellation.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule query-cancellation (MIT, notice retained in NOTICE.md): restructured to the rule template and corrected when queries are cancelled: only when the query function consumes the signal."
 ---
 
-## query-cancellation: Implement Query Cancellation Properly
+## Pass the query's AbortSignal to the request
 
-## Explanation
+Pass the `signal` that TanStack Query gives the query function to the underlying request, such as `fetch` or an HTTP client, so obsolete requests are aborted.
 
-TanStack Query provides an `AbortSignal` to cancel in-flight requests when queries become stale or components unmount. Pass this signal to your fetch calls to prevent memory leaks and wasted bandwidth.
+### Implementation
 
-## Bad Example
+- Destructure `signal` from the query function's context and pass it to `fetch`, your HTTP client, or any cancellable work.
+- For custom work, such as a web worker, stop the work when the signal fires.
+- Encode user input in URLs, such as with `URLSearchParams`, rather than interpolating it raw.
+- Before an optimistic update, await `queryClient.cancelQueries` for the affected keys.
+- Debounce search-as-you-type input as well; cancellation stops obsolete responses but does not prevent the requests from starting.
+
+### Rationale
+
+By default, TanStack Query does not cancel a query when its component unmounts or its key changes; the request finishes and its data is cached.
+When the query function consumes the signal, TanStack Query aborts the request in those cases, and the query reverts to its previous state.
+Aborting obsolete requests saves bandwidth and server work, and keeps a slow old response from arriving after a newer one.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Not using abort signal - requests complete even when unnecessary
 const { data } = useQuery({
-  queryKey: ['search', searchTerm],
+  queryKey: ['search', term],
   queryFn: async () => {
-    // User types fast: "a", "ab", "abc"
-    // Three requests fire, all complete, wasting bandwidth
-    const response = await fetch(`/api/search?q=${searchTerm}`)
-    return response.json()
+    const response = await fetch(`/api/search?q=${term}`);
+    return response.json();
   },
-})
-
-// Component unmounts but request keeps running
-function UserProfile({ userId }: { userId: string }) {
-  const { data } = useQuery({
-    queryKey: ['user', userId],
-    queryFn: async () => {
-      const response = await fetch(`/api/users/${userId}`)
-      return response.json()  // Completes even if user navigated away
-    },
-  })
-}
+});
 ```
 
-## Good Example: Using AbortSignal with Fetch
+Typing "abc" leaves the requests for "a" and "ab" running to completion, and the raw term breaks on characters such as `&`.
+
+**Correct:**
 
 ```tsx
 const { data } = useQuery({
-  queryKey: ['search', searchTerm],
+  queryKey: ['search', term],
   queryFn: async ({ signal }) => {
-    const response = await fetch(`/api/search?q=${searchTerm}`, {
-      signal,  // Pass abort signal to fetch
-    })
-    return response.json()
+    const response = await fetch(`/api/search?${new URLSearchParams({ q: term })}`, { signal });
+    return response.json();
   },
-})
-
-// Now when user types "a", "ab", "abc" quickly:
-// - "a" request is cancelled when "ab" starts
-// - "ab" request is cancelled when "abc" starts
-// - Only "abc" completes
+});
 ```
 
-## Good Example: With Axios
+When the key changes, the previous request is aborted.
 
-```tsx
-import axios from 'axios'
+### Validation
 
-const { data } = useQuery({
-  queryKey: ['users', userId],
-  queryFn: async ({ signal }) => {
-    const response = await axios.get(`/api/users/${userId}`, {
-      signal,  // Axios supports AbortSignal
-    })
-    return response.data
-  },
-})
-```
+Type quickly into a search field backed by the query and check in the network panel that superseded requests show as cancelled.
+Check that query functions making requests pass `signal` through.
 
-## Good Example: Manual Cancellation
-
-```tsx
-function SearchResults() {
-  const queryClient = useQueryClient()
-  const [searchTerm, setSearchTerm] = useState('')
-
-  const { data } = useQuery({
-    queryKey: ['search', searchTerm],
-    queryFn: async ({ signal }) => {
-      const response = await fetch(`/api/search?q=${searchTerm}`, { signal })
-      return response.json()
-    },
-    enabled: searchTerm.length > 0,
-  })
-
-  // Cancel all search queries manually
-  const handleClear = () => {
-    queryClient.cancelQueries({ queryKey: ['search'] })
-    setSearchTerm('')
-  }
-
-  return (
-    <div>
-      <input
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <button onClick={handleClear}>Clear</button>
-      <Results data={data} />
-    </div>
-  )
-}
-```
-
-## Good Example: In Mutations (Before Optimistic Update)
-
-```tsx
-const updateTodo = useMutation({
-  mutationFn: (todo: Todo) => api.updateTodo(todo),
-  onMutate: async (newTodo) => {
-    // Cancel outgoing queries to prevent overwriting optimistic update
-    await queryClient.cancelQueries({ queryKey: ['todos'] })
-    await queryClient.cancelQueries({ queryKey: ['todos', newTodo.id] })
-
-    // Proceed with optimistic update...
-    const previousTodos = queryClient.getQueryData(['todos'])
-    queryClient.setQueryData(['todos'], (old) => /* ... */)
-
-    return { previousTodos }
-  },
-})
-```
-
-## Good Example: Custom Cancellable Promise
-
-```tsx
-// For non-fetch APIs that need custom cancellation
-const { data } = useQuery({
-  queryKey: ['expensive-computation', params],
-  queryFn: ({ signal }) => {
-    return new Promise((resolve, reject) => {
-      // Check if already cancelled
-      if (signal.aborted) {
-        reject(new DOMException('Aborted', 'AbortError'))
-        return
-      }
-
-      const worker = new Worker('computation.js')
-      worker.postMessage(params)
-
-      worker.onmessage = (e) => resolve(e.data)
-      worker.onerror = (e) => reject(e)
-
-      // Listen for cancellation
-      signal.addEventListener('abort', () => {
-        worker.terminate()
-        reject(new DOMException('Aborted', 'AbortError'))
-      })
-    })
-  },
-})
-```
-
-## When Queries Are Cancelled
-
-| Scenario | Cancelled? |
-|----------|------------|
-| Query key changes | Yes |
-| Component unmounts | Yes |
-| `queryClient.cancelQueries()` called | Yes |
-| Refetch triggered | Previous request cancelled |
-| `enabled` becomes false | Yes |
-
-## Context
-
-- Always pass `signal` to fetch/axios for automatic cancellation
-- Cancelled queries don't trigger `onError` - they're silently dropped
-- Use `queryClient.cancelQueries()` before optimistic updates
-- AbortError is thrown when cancelled - handle if needed
-- Cancellation prevents wasted bandwidth and race conditions
-- Essential for search-as-you-type and fast navigation patterns
-
-Source: [TanStack Agent Skills - tanstack-query/query-cancellation.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/query-cancellation.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A query function for instant, local work does not need to use the signal.

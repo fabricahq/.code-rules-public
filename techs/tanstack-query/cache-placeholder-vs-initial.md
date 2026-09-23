@@ -1,165 +1,76 @@
 ---
-title: "cache-placeholder-vs-initial: Understand Placeholder vs Initial Data"
-whenToRead: "Before showing fallback data while a TanStack Query fetch is pending and deciding whether that data should enter the cache."
+title: "Use initialData only for complete data"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Query code that shows data before a fetch completes, such as previews from a list, server-provided data, or the previous page while the next loads."
 impact: "MEDIUM"
-impactDescription: "prevents temporary placeholder data from being mistaken for real cached data"
-tags: "tanstack-query, cache, placeholder-data, initial-data, loading"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-placeholder-vs-initial.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/cache-placeholder-vs-initial.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Partial data passed as initialData is cached as if it were a real response, so other components see incomplete data and it may never be refetched."
+tags: "tanstack-query, placeholderData, initialData, cache"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-placeholder-vs-initial.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-placeholder-vs-initial (MIT, notice retained in NOTICE.md): restructured to the rule template and removed an example that combined options in a way TanStack Query ignores."
 ---
 
-## cache-placeholder-vs-initial: Understand Placeholder vs Initial Data
+## Use initialData only for complete data
 
-## Explanation
+Pass `initialData` only when you have the complete, authoritative value for a query.
+Use `placeholderData` for anything partial or temporary, such as a preview from a list or the previous page while the next one loads.
 
-`placeholderData` and `initialData` both provide data before the fetch completes, but behave differently. `initialData` is treated as real cached data, while `placeholderData` is temporary and doesn't persist to cache. Choose based on whether your fallback data should be cached.
+### Implementation
 
-## Bad Example
+- Use `placeholderData` for previews and previous results; it is shown while the query fetches and is never written to the cache.
+- Use `placeholderData: keepPreviousData` to keep showing the previous page or filter results while the next ones load.
+- Check `isPlaceholderData` to mark or disable UI that shows placeholder content.
+- Use `initialData` only for complete data, and pass `initialDataUpdatedAt` so `staleTime` is measured from when that data was actually fetched.
+- For server rendering, prefer prefetching and hydrating the cache over passing `initialData` through props.
 
-```tsx
-// Using initialData when you don't want it cached
-function PostPreview({ postId, previewData }: Props) {
-  const { data } = useQuery({
-    queryKey: ['posts', postId],
-    queryFn: () => fetchPost(postId),
-    initialData: previewData,  // Wrong: this becomes cached "truth"
-    // If previewData is incomplete, it pollutes the cache
-    // staleTime applies to this data as if it were fetched
-  })
-}
+### Rationale
 
-// Using placeholderData when you want persistence
-function UserProfile({ userId }: Props) {
-  const { data } = useQuery({
-    queryKey: ['users', userId],
-    queryFn: () => fetchUser(userId),
-    placeholderData: cachedUserFromList,  // Wrong: won't persist
-    // User navigates away and back - placeholder shown again
-    // No cache entry created until fetch completes
-  })
-}
-```
+`initialData` is written to the cache as if a fetch returned it.
+Other components reading the same key receive it, and if it looks fresh under `staleTime`, no fetch replaces it.
+Partial data in `initialData` therefore spreads incomplete data through the app.
+`placeholderData` exists only for the observer that uses it and disappears once real data arrives.
 
-## Good Example: placeholderData for Temporary Display
+### Examples
+
+#### Application: A preview from a list
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Show list data while fetching detail
-function PostDetail({ postId }: { postId: string }) {
-  const queryClient = useQueryClient()
-
-  const { data, isPlaceholderData } = useQuery({
-    queryKey: ['posts', postId],
-    queryFn: () => fetchPost(postId),
-    placeholderData: () => {
-      // Use partial data from list cache as placeholder
-      const posts = queryClient.getQueryData<Post[]>(['posts'])
-      return posts?.find(p => p.id === postId)
-    },
-  })
-
-  return (
-    <article className={isPlaceholderData ? 'opacity-50' : ''}>
-      <h1>{data?.title}</h1>
-      {isPlaceholderData ? (
-        <p>Loading full content...</p>
-      ) : (
-        <div>{data?.content}</div>
-      )}
-    </article>
-  )
-}
+const { data } = useQuery({
+  queryKey: ['posts', postId],
+  queryFn: () => fetchPost(postId),
+  initialData: postSummaryFromList,
+});
 ```
 
-## Good Example: initialData for Known Good Data
+The summary lacks the post body, but it is cached as the full post for every component that reads `['posts', postId]`.
+
+**Correct:**
 
 ```tsx
-// SSR: Data fetched on server should be initial
-function PostPage({ serverData }: { serverData: Post }) {
-  const { data } = useQuery({
-    queryKey: ['posts', serverData.id],
-    queryFn: () => fetchPost(serverData.id),
-    initialData: serverData,
-    // Specify when this data was fetched for proper stale calculation
-    initialDataUpdatedAt: serverData.fetchedAt,
-  })
-
-  return <PostContent post={data} />
-}
-
-// Pre-seeding cache with complete data
-function App() {
-  const queryClient = useQueryClient()
-
-  // If you have complete, authoritative data
-  useEffect(() => {
-    queryClient.setQueryData(['config'], completeConfigData)
-  }, [])
-}
+const { data, isPlaceholderData } = useQuery({
+  queryKey: ['posts', postId],
+  queryFn: () => fetchPost(postId),
+  placeholderData: postSummaryFromList,
+});
 ```
 
-## Good Example: keepPreviousData Pattern
+#### Application: Paginated results
+
+**Correct:**
 
 ```tsx
-// Keep showing old data while fetching new (pagination, filters)
-function ProductList({ page }: { page: number }) {
-  const { data, isPlaceholderData } = useQuery({
-    queryKey: ['products', page],
-    queryFn: () => fetchProducts(page),
-    placeholderData: keepPreviousData,  // Built-in helper
-  })
-
-  return (
-    <div className={isPlaceholderData ? 'opacity-70' : ''}>
-      {data?.map(product => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-      {isPlaceholderData && <LoadingOverlay />}
-    </div>
-  )
-}
+const { data, isPlaceholderData } = useQuery({
+  queryKey: ['products', { page }],
+  queryFn: () => fetchProducts(page),
+  placeholderData: keepPreviousData,
+});
 ```
 
-## Comparison Table
+The previous page stays visible, marked by `isPlaceholderData`, until the next page arrives.
 
-| Behavior | `initialData` | `placeholderData` |
-|----------|---------------|-------------------|
-| Persisted to cache | Yes | No |
-| `staleTime` applies | Yes | No (always fetches) |
-| `isPlaceholderData` | `false` | `true` |
-| Shown to other components | Yes (cached) | No |
-| Use case | SSR, complete known data | Preview, previous page |
-| Affects `dataUpdatedAt` | Yes (use `initialDataUpdatedAt`) | No |
+### Validation
 
-## Good Example: Combining Both
+For each `initialData`, check that the value is complete for the query and that `initialDataUpdatedAt` is set when the data came from an earlier fetch.
 
-```tsx
-function PostDetail({ postId, ssrData }: Props) {
-  const queryClient = useQueryClient()
-
-  const { data } = useQuery({
-    queryKey: ['posts', postId],
-    queryFn: () => fetchPost(postId),
-
-    // If we have SSR data, use as initial (cached)
-    initialData: ssrData,
-    initialDataUpdatedAt: ssrData?.fetchedAt,
-
-    // If no SSR data, try to use list preview as placeholder
-    placeholderData: () => {
-      if (ssrData) return undefined  // Already have initial
-      const posts = queryClient.getQueryData<Post[]>(['posts'])
-      return posts?.find(p => p.id === postId)
-    },
-  })
-}
-```
-
-## Context
-
-- `placeholderData` can be a value or function (lazy evaluation)
-- `initialData` affects cache immediately on query creation
-- Use `initialDataUpdatedAt` with `initialData` for proper stale calculations
-- `keepPreviousData` is a built-in placeholder strategy
-- Check `isPlaceholderData` to show loading indicators
-- `placeholderData` is ideal for "instant" UI while fetching
-
-Source: [TanStack Agent Skills - tanstack-query/cache-placeholder-vs-initial.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-placeholder-vs-initial.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+`initialData` holding a complete, authoritative value is not a violation.

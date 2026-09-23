@@ -1,152 +1,69 @@
 ---
-title: "pf-intent-prefetch: Prefetch on User Intent (Hover, Focus)"
-whenToRead: "Before prefetching TanStack Query data on hover, focus, or other signals that a user may navigate soon."
+title: "Prefetch likely next data on user intent"
+whenToRead: "Before planning, writing, changing, or reviewing links, buttons, or routes that lead to screens backed by TanStack Query data, or diagnosing loading states after navigation."
 impact: "MEDIUM"
-impactDescription: "starts likely next data requests before navigation is committed"
-tags: "tanstack-query, prefetching, intent, hover, navigation"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/pf-intent-prefetch.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/pf-intent-prefetch.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Starting a fetch only after navigation makes users wait for data they signaled they wanted moments earlier."
+tags: "tanstack-query, prefetch, navigation, performance"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/pf-intent-prefetch.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule pf-intent-prefetch (MIT, notice retained in NOTICE.md): restructured to the rule template, fixed the timer ref for current React types, and added touch and router guidance."
 ---
 
-## pf-intent-prefetch: Prefetch on User Intent (Hover, Focus)
+## Prefetch likely next data on user intent
 
-## Explanation
+When a user signals that they are about to open a screen, such as hovering or focusing its link, prefetch that screen's queries with `queryClient.prefetchQuery`.
 
-Prefetch data when users show intent to navigate (hover, focus) rather than waiting for click. This eliminates perceived loading time for likely next actions.
+### Implementation
 
-## Bad Example
+- Prefetch with the same query options factory the destination uses, so the prefetched entry is the one it reads.
+- Trigger on hover and focus for pointer and keyboard users; on touch devices, trigger on `touchstart` or when the link scrolls into view.
+- Rely on `staleTime`: `prefetchQuery` does nothing while the cached data is fresh, so repeated hovers do not refetch.
+- Add a short delay, and cancel it when the pointer leaves, to skip prefetches from passing mouse movements.
+- In a router with loaders, such as TanStack Router with `preload: 'intent'`, prefetch from the route loader instead of from each link.
+- Prefetch only likely paths; prefetching every link on a long list wastes bandwidth.
 
-```tsx
-// No prefetching - data fetches on click
-function PostList({ posts }: { posts: Post[] }) {
-  return (
-    <ul>
-      {posts.map(post => (
-        <li key={post.id}>
-          <Link to={`/posts/${post.id}`}>
-            {post.title}
-          </Link>
-          {/* User clicks, waits for data to load */}
-        </li>
-      ))}
-    </ul>
-  )
-}
-```
+### Rationale
 
-## Good Example
+Hover and focus usually precede a click by a few hundred milliseconds.
+Starting the request then lets the data arrive before, or soon after, the next screen renders.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-import { useQueryClient } from '@tanstack/react-query'
-import { postQueries } from '@/lib/queries'
-
-function PostList({ posts }: { posts: Post[] }) {
-  const queryClient = useQueryClient()
-
-  const handlePrefetch = (postId: number) => {
-    queryClient.prefetchQuery({
-      ...postQueries.detail(postId),
-      staleTime: 60 * 1000,  // Consider fresh for 1 minute
-    })
-  }
-
-  return (
-    <ul>
-      {posts.map(post => (
-        <li key={post.id}>
-          <Link
-            to={`/posts/${post.id}`}
-            onMouseEnter={() => handlePrefetch(post.id)}
-            onFocus={() => handlePrefetch(post.id)}
-          >
-            {post.title}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  )
-}
+<Link to={`/posts/${post.id}`}>{post.title}</Link>
 ```
 
-## Good Example: With TanStack Router
+The post's data starts loading only after the detail page mounts.
 
-```tsx
-import { Link } from '@tanstack/react-router'
-
-// TanStack Router has built-in prefetching
-function PostList({ posts }: { posts: Post[] }) {
-  return (
-    <ul>
-      {posts.map(post => (
-        <li key={post.id}>
-          <Link
-            to="/posts/$postId"
-            params={{ postId: post.id }}
-            preload="intent"  // Prefetch on hover/focus
-          >
-            {post.title}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-// Or set as router default
-const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
-  defaultPreloadDelay: 100,  // Wait 100ms before prefetching
-})
-```
-
-## Good Example: Prefetch with Delay
+**Correct:**
 
 ```tsx
 function PostLink({ post }: { post: Post }) {
-  const queryClient = useQueryClient()
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const queryClient = useQueryClient();
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const handleMouseEnter = () => {
-    // Delay prefetch to avoid unnecessary requests on quick mouse movements
-    timeoutRef.current = setTimeout(() => {
-      queryClient.prefetchQuery(postQueries.detail(post.id))
-    }, 100)
+  function prefetch() {
+    timer.current = setTimeout(() => {
+      void queryClient.prefetchQuery(postQueries.detail(post.id));
+    }, 100);
   }
 
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
+  function cancel() {
+    clearTimeout(timer.current);
   }
 
   return (
-    <Link
-      to={`/posts/${post.id}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <Link to={`/posts/${post.id}`} onMouseEnter={prefetch} onFocus={prefetch} onMouseLeave={cancel} onBlur={cancel}>
       {post.title}
     </Link>
-  )
+  );
 }
 ```
 
-## Prefetch Triggers
+### Validation
 
-| Trigger | When to Use |
-|---------|-------------|
-| `onMouseEnter` | Desktop, links/buttons user will likely click |
-| `onFocus` | Keyboard navigation, accessibility |
-| `onTouchStart` | Mobile, before navigation |
-| Component mount | Likely next pages, wizard steps |
-| Intersection Observer | Below-fold content |
+Hover over a link, wait briefly, then open it, and check in the network panel that the detail request started on hover and that the page renders without a loading state.
 
-## Context
-
-- Set appropriate `staleTime` when prefetching to avoid immediate refetch
-- Consider mobile where hover isn't available
-- Don't prefetch everything - focus on likely paths
-- Prefetched data uses `gcTime` for retention
-- Watch network tab to verify prefetch timing
-
-Source: [TanStack Agent Skills - tanstack-query/pf-intent-prefetch.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/pf-intent-prefetch.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Links to screens that load instantly, or rarely visited paths, do not need prefetching.

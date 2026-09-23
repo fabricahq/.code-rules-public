@@ -1,153 +1,61 @@
 ---
-title: "perf-select-transform: Use Select to Transform and Filter Data"
-whenToRead: "Before deriving a filtered, sorted, or narrowed view of TanStack Query data for a component."
-impact: "LOW"
-impactDescription: "keeps query data transformations memoized and outside repetitive render work"
-tags: "tanstack-query, performance, select, transforms, rerenders"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/perf-select-transform.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/perf-select-transform.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+title: "Derive component views of query data with a stable select"
+whenToRead: "Before writing, changing, or reviewing components that filter, sort, pick fields from, or compute values from TanStack Query data, or diagnosing components that re-render on unrelated cache updates."
+impact: "LOW-MEDIUM"
+impactDescription: "Components that read whole query results re-render whenever any part of the data changes, and inline selectors repeat their work on every render."
+tags: "tanstack-query, select, rerender, performance"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/perf-select-transform.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule perf-select-transform (MIT, notice retained in NOTICE.md): restructured to the rule template and corrected the claim that select always memoizes: it reuses results only when the data and the selector reference are unchanged."
 ---
 
-## perf-select-transform: Use Select to Transform and Filter Data
+## Derive component views of query data with a stable select
 
-## Explanation
+When a component needs only part of a query's data, or a value derived from it, compute it with the query's `select` option, and keep the selector's reference stable.
 
-The `select` option transforms query data before it reaches your component. Use it for filtering, sorting, or deriving data. Benefits include memoization (re-runs only when data changes) and reduced component re-renders.
+### Implementation
 
-## Bad Example
+- Use `select` to filter, sort, pick an item, or compute a summary; the component re-renders only when the selected result changes.
+- Define selectors that do not depend on props at module level, or in the query options factory.
+- Wrap selectors that depend on props or state in `useCallback`, so the reference changes only when those inputs do.
+- An inline arrow selector works, but it runs again on every render because its reference changes; that is fine for cheap selections.
+- Keep the cached data in the server's shape; `select` shapes it for one consumer without changing what other consumers see.
+
+### Rationale
+
+`select` runs on the cached data and returns a structurally shared result, so a component that selects `completedCount` does not re-render when an unrelated todo's title changes.
+TanStack Query reuses the previous result only when both the data and the selector function are unchanged; a new function on every render repeats the work.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Transforming in component - runs on every render
-function CompletedTodos() {
-  const { data: todos } = useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodos,
-  })
-
-  // This filtering runs on every render
-  const completedTodos = todos?.filter(todo => todo.completed) ?? []
-  const sortedTodos = [...completedTodos].sort((a, b) =>
-    new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
-  )
-
-  return <TodoList todos={sortedTodos} />
+function CompletedCount() {
+  const { data: todos } = useQuery(todoQueries.list());
+  const completedCount = todos?.filter((todo) => todo.completed).length ?? 0;
+  return <span>{completedCount}</span>;
 }
 ```
 
-## Good Example
+The component re-renders on every change to any todo, even when the count stays the same.
+
+**Correct:**
 
 ```tsx
-// Using select - runs only when data changes
-function CompletedTodos() {
-  const { data: completedTodos } = useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodos,
-    select: (todos) =>
-      todos
-        .filter(todo => todo.completed)
-        .sort((a, b) =>
-          new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
-        ),
-  })
+const selectCompletedCount = (todos: ReadonlyArray<Todo>) => todos.filter((todo) => todo.completed).length;
 
-  return <TodoList todos={completedTodos ?? []} />
+function CompletedCount() {
+  const { data: completedCount = 0 } = useQuery({ ...todoQueries.list(), select: selectCompletedCount });
+  return <span>{completedCount}</span>;
 }
 ```
 
-## Good Example: Selecting Specific Fields
+The count re-renders the component only when it changes, and the module-level selector is reused across renders.
 
-```tsx
-// Derive computed values
-function TodoStats() {
-  const { data: stats } = useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodos,
-    select: (todos) => ({
-      total: todos.length,
-      completed: todos.filter(t => t.completed).length,
-      pending: todos.filter(t => !t.completed).length,
-      completionRate: todos.length
-        ? (todos.filter(t => t.completed).length / todos.length) * 100
-        : 0,
-    }),
-  })
+### Validation
 
-  return (
-    <div>
-      <span>{stats?.completed} / {stats?.total} completed</span>
-      <span>({stats?.completionRate.toFixed(1)}%)</span>
-    </div>
-  )
-}
-```
+Use the React DevTools Profiler to check that components using `select` re-render only when their selected value changes.
+Check that expensive selectors have stable references.
 
-## Good Example: Stable Select with useCallback
-
-```tsx
-// When select depends on external values, stabilize with useCallback
-function FilteredTodos({ status }: { status: 'all' | 'active' | 'completed' }) {
-  const selectTodos = useCallback(
-    (todos: Todo[]) => {
-      switch (status) {
-        case 'active':
-          return todos.filter(t => !t.completed)
-        case 'completed':
-          return todos.filter(t => t.completed)
-        default:
-          return todos
-      }
-    },
-    [status]
-  )
-
-  const { data: filteredTodos } = useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodos,
-    select: selectTodos,
-  })
-
-  return <TodoList todos={filteredTodos ?? []} />
-}
-```
-
-## Good Example: Picking Single Item from List
-
-```tsx
-// Select single item from cached list
-function useTodoById(id: number) {
-  return useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodos,
-    select: (todos) => todos.find(todo => todo.id === id),
-  })
-}
-
-// Usage - shares cache with list query
-function TodoDetail({ id }: { id: number }) {
-  const { data: todo } = useTodoById(id)
-
-  if (!todo) return <div>Todo not found</div>
-  return <div>{todo.title}</div>
-}
-```
-
-## When to Use Select
-
-| Scenario | Use Select? |
-|----------|-------------|
-| Filtering list data | Yes |
-| Sorting data | Yes |
-| Computing derived values | Yes |
-| Picking single item from list | Yes |
-| Heavy transformations | Yes (memoized) |
-| Simple data pass-through | No |
-| Transformation needs external state | Yes, with useCallback |
-
-## Context
-
-- `select` leverages structural sharing - only re-runs when data actually changes
-- Original query data stays cached; transformation applies to consumer
-- Multiple components can use different `select` on the same query
-- Avoid unstable function references - use `useCallback` when needed
-- For complex transformations, consider useMemo in component instead if readability suffers
-
-Source: [TanStack Agent Skills - tanstack-query/perf-select-transform.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/perf-select-transform.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Deriving a cheap value in the component body is not a violation when re-renders are not a problem.

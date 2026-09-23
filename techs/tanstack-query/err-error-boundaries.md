@@ -1,159 +1,73 @@
 ---
-title: "err-error-boundaries: Use Error Boundaries with useQueryErrorResetBoundary"
-whenToRead: "Before handling TanStack Query errors with React error boundaries or Suspense, including a user retry flow."
+title: "Reset query errors when an error boundary retries"
+whenToRead: "Before planning, writing, changing, or reviewing React error boundaries around TanStack Query suspense queries or queries with throwOnError, or a retry button for failed data."
 impact: "HIGH"
-impactDescription: "lets suspended query failures recover cleanly instead of trapping users in stale error states"
-tags: "tanstack-query, errors, error-boundaries, suspense, retry"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/err-error-boundaries.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/err-error-boundaries.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "An error boundary that resets without resetting the query's error state shows the same error again instead of retrying."
+tags: "tanstack-query, error-boundaries, suspense, errors"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/err-error-boundaries.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule err-error-boundaries (MIT, notice retained in NOTICE.md): restructured to the rule template, added when suspense queries throw, and removed the router-specific example."
 ---
 
-## err-error-boundaries: Use Error Boundaries with useQueryErrorResetBoundary
+## Reset query errors when an error boundary retries
 
-## Explanation
+When query errors are shown by a React error boundary, wire the boundary's reset to TanStack Query's error reset, using `QueryErrorResetBoundary` or `useQueryErrorResetBoundary`.
 
-When using Suspense with TanStack Query, errors propagate to error boundaries. Use `useQueryErrorResetBoundary` to reset query errors when users retry, preventing stuck error states.
+### Implementation
 
-## Bad Example
+- Pass the `reset` function from `useQueryErrorResetBoundary`, or from a `QueryErrorResetBoundary` render prop, to the error boundary's `onReset`.
+- Place boundaries around independent sections so one failure does not replace the whole page.
+- Suspense queries throw to the boundary only when there is no cached data; a failed background refetch leaves the old data and sets the query's `error`.
+  Show that error inline where it matters.
+- For non-suspense queries, errors reach a boundary only with `throwOnError`; otherwise render the query's `error` state inline.
+- In a router with its own error component, also reset the query errors before retrying the route.
+
+### Rationale
+
+After a query fails, TanStack Query keeps it in the error state.
+Resetting the error boundary re-renders the children, but without a query error reset the suspense query rethrows the cached error instead of fetching again.
+The reset boundary marks those queries for a new fetch on the next render.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Error boundary without query reset - retry may not work
-function ErrorBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <ReactErrorBoundary
-      fallbackRender={({ error, resetErrorBoundary }) => (
-        <div>
-          <p>Error: {error.message}</p>
-          <button onClick={resetErrorBoundary}>Try again</button>
-          {/* resetErrorBoundary alone doesn't reset query state */}
-        </div>
-      )}
-    >
-      {children}
-    </ReactErrorBoundary>
-  )
-}
-
-// Query error persists after retry click
+<ErrorBoundary
+  fallbackRender={({ resetErrorBoundary }) => <button onClick={resetErrorBoundary}>Try again</button>}
+>
+  <Suspense fallback={<Loading />}>
+    <Posts />
+  </Suspense>
+</ErrorBoundary>
 ```
 
-## Good Example
+Clicking the button re-renders `Posts`, which throws the same cached error again.
+
+**Correct:**
 
 ```tsx
-import { useQueryErrorResetBoundary } from '@tanstack/react-query'
-import { ErrorBoundary } from 'react-error-boundary'
-
-function QueryErrorBoundary({ children }: { children: React.ReactNode }) {
-  const { reset } = useQueryErrorResetBoundary()
+function QueryErrorBoundary({ children }: { children: ReactNode }) {
+  const { reset } = useQueryErrorResetBoundary();
 
   return (
     <ErrorBoundary
       onReset={reset}
-      fallbackRender={({ error, resetErrorBoundary }) => (
-        <div className="error-container">
-          <h2>Something went wrong</h2>
-          <pre>{error.message}</pre>
-          <button onClick={resetErrorBoundary}>
-            Try again
-          </button>
+      fallbackRender={({ resetErrorBoundary }) => (
+        <div role="alert">
+          <p>Could not load this section.</p>
+          <button onClick={resetErrorBoundary}>Try again</button>
         </div>
       )}
     >
       {children}
     </ErrorBoundary>
-  )
-}
-
-// Usage with Suspense
-function App() {
-  return (
-    <QueryErrorBoundary>
-      <Suspense fallback={<Loading />}>
-        <Posts />
-      </Suspense>
-    </QueryErrorBoundary>
-  )
-}
-
-function Posts() {
-  // useSuspenseQuery throws on error, caught by boundary
-  const { data } = useSuspenseQuery({
-    queryKey: ['posts'],
-    queryFn: fetchPosts,
-  })
-
-  return <PostList posts={data} />
+  );
 }
 ```
 
-## Good Example: With TanStack Router
+### Validation
 
-```tsx
-// Route-level error handling
-import { createFileRoute } from '@tanstack/react-router'
-import { useQueryErrorResetBoundary } from '@tanstack/react-query'
+Make a query fail, click retry, and check in the network panel that a new request is sent.
 
-export const Route = createFileRoute('/posts')({
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(postQueries.list()),
-
-  errorComponent: ({ error, reset }) => {
-    const { reset: resetQuery } = useQueryErrorResetBoundary()
-
-    return (
-      <div>
-        <p>Failed to load posts: {error.message}</p>
-        <button
-          onClick={() => {
-            resetQuery()
-            reset()
-          }}
-        >
-          Retry
-        </button>
-      </div>
-    )
-  },
-
-  component: PostsPage,
-})
-```
-
-## Error Boundary Placement Strategy
-
-```tsx
-// Granular error boundaries for isolated failures
-function Dashboard() {
-  return (
-    <div className="dashboard">
-      {/* Each section can fail independently */}
-      <QueryErrorBoundary>
-        <Suspense fallback={<Skeleton />}>
-          <RecentActivity />
-        </Suspense>
-      </QueryErrorBoundary>
-
-      <QueryErrorBoundary>
-        <Suspense fallback={<Skeleton />}>
-          <Statistics />
-        </Suspense>
-      </QueryErrorBoundary>
-
-      <QueryErrorBoundary>
-        <Suspense fallback={<Skeleton />}>
-          <Notifications />
-        </Suspense>
-      </QueryErrorBoundary>
-    </div>
-  )
-}
-```
-
-## Context
-
-- `useQueryErrorResetBoundary` clears error state for all queries in the boundary
-- Always pair Suspense queries with error boundaries
-- Place boundaries based on failure isolation needs
-- Consider inline error handling for non-critical data
-- The reset only affects queries that were in error state
-
-Source: [TanStack Agent Skills - tanstack-query/err-error-boundaries.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/err-error-boundaries.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+An inline error state for a query that does not throw is not a violation.
