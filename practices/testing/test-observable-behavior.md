@@ -19,6 +19,8 @@ Keep each test independent of execution order and other tests' data. Use stable 
 
 Do not add assertions just to raise coverage or retest a framework. Several assertions are appropriate when they jointly establish one behavior.
 
+Background: [Testing philosophy](../../assets/testing-philosophy.md).
+
 ### Validation
 
 Ask what incorrect user-visible result the test would catch. Refactoring private helpers while preserving behavior should leave the test valid. Run the test alone and with the suite to check isolation.

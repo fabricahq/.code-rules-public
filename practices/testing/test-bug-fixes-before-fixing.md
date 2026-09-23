@@ -18,6 +18,8 @@ Choose the lowest layer that faithfully reproduces the bug through an interface 
 
 For an urgent fix where a reliable reproduction is not yet possible, record what was verified and the remaining coverage gap. Do not claim a passing-after-only test proves the regression was reproduced.
 
+Background: [Testing philosophy](../../assets/testing-philosophy.md).
+
 ### Validation
 
 Keep evidence that the test fails for the original symptom before the fix and passes after it. Verify related valid inputs still work. Name the test for the behavior, not a private helper or incident number.
