@@ -16,9 +16,18 @@ Giving an agent a rule does not guarantee compliance. Ask your agent to read the
 
 | Group | Rules | What it helps with |
 | --- | --- | --- |
-| [Code design](practices/code-design/) | 1 | Express operations as meaningful steps without extracting unnecessary helpers |
-| [Testing](practices/testing/) | 3 | Test observable behavior, reproduce bugs, and cover boundary cases |
-| [TypeScript](techs/typescript/) | 3 | Validate unknown data, model distinct states, and preserve caller-owned inputs |
+| [Code design](practices/code-design/) | 1 | Express operations as meaningful steps |
+| [Testing](practices/testing/) | 3 | Test behavior, reproduce bugs, and cover boundary cases |
+| [Go](techs/go/) | 6 | Explain contracts, preserve useful errors, and test boundaries |
+| [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
+| [Playwright](techs/playwright/) | 3 | Keep browser tests independent and use stable locators |
+| [React](techs/react/) | 87 | Structure components, manage state, and avoid unnecessary work |
+| [TanStack Query](techs/tanstack-query/) | 22 | Manage query keys, caching, mutations, and hydration |
+| [TanStack Router](techs/tanstack-router/) | 18 | Structure routes, validate inputs, and coordinate data loading |
+| [TypeScript](techs/typescript/) | 33 | Model data, preserve contracts, and keep code understandable |
+| [Zustand](techs/zustand/) | 11 | Design stores, subscriptions, and persistence |
+
+The 185 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
 
 Practice groups apply across languages. Their TypeScript examples illustrate the ideas; they do not limit those practices to TypeScript projects.
 
@@ -37,7 +46,7 @@ Each group includes `_group.yaml` metadata and one Markdown file per rule. For f
 
 ## Use the library
 
-The library manifest (`rule-library.yaml`) and group metadata (`_group.yaml`) use YAML. These formats require the CLI changes in [Code Rules PR #55](https://github.com/fabricahq/code-rules/pull/55); merge that support before publishing this library’s first version.
+The library manifest (`rule-library.yaml`) and group metadata (`_group.yaml`) use YAML.
 
 The first release, `v0.1.0`, must be published before the commands below work. Until then, the proposed library is available for review in this repository's pull requests.
 
@@ -77,6 +86,6 @@ Maintainers review changes through pull requests and publish version tags for ap
 
 ## License and sources
 
-The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Some rules adapt mkosir's TypeScript Style Guide.
+The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Some rules include material from mkosir, Vercel Labs, and Deckard Gerritsen, plus guidance informed by official documentation. Fabrica-specific rules are not included.
 
-Rules adapted from third-party sources carry attribution in their metadata. [NOTICE.md](NOTICE.md) preserves the required third-party notice.
+Rules adapted from third-party sources carry attribution in their metadata. [NOTICE.md](NOTICE.md) preserves the required third-party notices.
