@@ -1,89 +1,71 @@
 ---
-title: "cache-stale-time: Set Appropriate staleTime Based on Data Volatility"
-whenToRead: "Before configuring freshness and refetch behavior for TanStack Query data with different rates of change."
+title: "Set staleTime from how fast data changes"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Query client defaults or per-query staleTime or gcTime, or diagnosing refetches on every mount, focus, or navigation."
 impact: "MEDIUM"
-impactDescription: "reduces unnecessary refetches while keeping data freshness explicit"
-tags: "tanstack-query, cache, stale-time, freshness, refetching"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-stale-time.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/cache-stale-time.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "The default staleTime of zero refetches data on every mount and window focus, while an overly long staleTime shows outdated data."
+tags: "tanstack-query, cache, staleTime, gcTime"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-stale-time.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-stale-time (MIT, notice retained in NOTICE.md): merged the gcTime rule, restructured to the rule template, and labeled suggested durations as starting points."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-gc-time.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-gc-time (MIT, notice retained in NOTICE.md): merged the gcTime rule, restructured to the rule template, and labeled suggested durations as starting points."
 ---
 
-## cache-stale-time: Set Appropriate staleTime Based on Data Volatility
+## Set staleTime from how fast data changes
 
-## Explanation
+Set a client-wide default `staleTime` above zero, and override it per query based on how quickly that data changes and how much outdated data would matter.
+Leave `gcTime` at its default unless you have a specific reason to change it.
 
-`staleTime` determines how long data is considered fresh. The default is 0ms, meaning data is immediately stale and will refetch on every new query mount. Set appropriate staleTime based on how often your data actually changes to reduce unnecessary network requests.
+### Implementation
 
-## Bad Example
+- Set `defaultOptions.queries.staleTime` on the `QueryClient`, such as one minute, rather than relying on the default of zero.
+- Give slowly changing data, such as reference lists or configuration, a longer `staleTime`, up to `Infinity` with explicit invalidation.
+- Give fast-changing data a short `staleTime`, or refetch on an interval when users need it live.
+- Put per-query values in the query's `queryOptions` factory so every use gets the same freshness.
+- `gcTime` controls how long unused data stays in memory, five minutes by default in the browser.
+  Raise it when users often return to the same data after longer gaps, or when persisting the cache.
+  Lower it for large results viewed once.
+  Avoid `gcTime: 0` for queries rendered on the server.
+- Treat suggested durations as starting points; the right value depends on how stale data can be before users are misled.
 
-```tsx
-// Default staleTime of 0 - refetches on every component mount
-const { data } = useQuery({
-  queryKey: ['user-profile', userId],
-  queryFn: () => fetchUserProfile(userId),
-  // No staleTime set - always considered stale
-})
+### Rationale
 
-// User profile probably doesn't change every second
-// This causes unnecessary API calls on navigation
+Data is fresh for `staleTime` after it is fetched, and TanStack Query does not refetch fresh data when a component mounts or the window regains focus.
+With the default of zero, every new observer and every focus triggers a request, which multiplies load for data that rarely changes.
+`gcTime` is independent: it decides when data no longer used by any component is removed from the cache.
 
-// Setting same staleTime everywhere regardless of data type
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,  // 1 minute for everything - too simple
-    },
-  },
-})
-```
+### Examples
 
-## Good Example
+**Incorrect (counterexample):**
 
 ```tsx
-// Match staleTime to data volatility
-const { data: profile } = useQuery({
-  queryKey: ['user-profile', userId],
-  queryFn: () => fetchUserProfile(userId),
-  staleTime: 5 * 60 * 1000,  // 5 minutes - profile rarely changes
-})
+const queryClient = new QueryClient();
 
-const { data: notifications } = useQuery({
-  queryKey: ['notifications'],
-  queryFn: fetchNotifications,
-  staleTime: 30 * 1000,  // 30 seconds - changes more frequently
-})
-
-const { data: stockPrice } = useQuery({
-  queryKey: ['stock', symbol],
-  queryFn: () => fetchStockPrice(symbol),
-  staleTime: 0,  // Real-time data - always refetch
-})
-
-// Set sensible defaults, override per-query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,  // 1 minute default
-    },
-  },
-})
+useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
 ```
 
-## Recommended staleTime Values
+Categories rarely change, but they are refetched every time a component using them mounts and every time the window regains focus.
 
-| Data Type | staleTime | Rationale |
-|-----------|-----------|-----------|
-| Real-time (stocks, live feeds) | 0 | Must always be current |
-| Frequently changing (notifications) | 30s - 1min | Balance freshness and requests |
-| User-generated content | 1 - 5min | Changes on user action |
-| Reference data (categories, config) | 10 - 30min | Rarely changes |
-| Static content | Infinity | Never changes |
+**Correct:**
 
-## Context
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 60 * 1000 } },
+});
 
-- `staleTime: 0` (default) triggers background refetch on every mount
-- `staleTime: Infinity` never considers data stale (manual invalidation only)
-- Stale data is still returned instantly - refetch happens in background
-- For SSR, set higher staleTime to avoid immediate client refetch
-- Consider using `queryOptions` factory to centralize staleTime per data type
+export const categoryQueries = {
+  all: () =>
+    queryOptions({
+      queryKey: ['categories'],
+      queryFn: fetchCategories,
+      staleTime: 30 * 60 * 1000,
+    }),
+};
+```
 
-Source: [TanStack Agent Skills - tanstack-query/cache-stale-time.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-stale-time.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+### Validation
+
+Watch the network panel while navigating between screens and refocusing the window, and check that slowly changing data is not refetched each time.
+Check that the `QueryClient` sets a default `staleTime`.
+
+A `staleTime` of zero is not a violation for data that must always be refetched when shown.

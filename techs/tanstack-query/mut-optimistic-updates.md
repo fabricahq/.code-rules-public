@@ -1,146 +1,133 @@
 ---
-title: "mut-optimistic-updates: Implement Optimistic Updates for Responsive UI"
-whenToRead: "Before adding immediate UI feedback for a predictable TanStack Query mutation, including rollback when the server rejects it."
-impact: "HIGH"
-impactDescription: "makes predictable user writes feel immediate while preserving rollback paths"
-tags: "tanstack-query, mutations, optimistic-updates, rollback, cache"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-optimistic-updates.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/mut-optimistic-updates.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+title: "Make optimistic updates reversible, and decide them once"
+whenToRead: "Before planning, writing, changing, or reviewing a TanStack Query mutation that shows its result before the server confirms it, or whose onMutate, onError, and onSettled callbacks share decisions or derived values."
+impact: "MEDIUM-HIGH"
+impactDescription: "An optimistic update without cancellation, rollback, and a final refetch can be overwritten by stale responses or leave the UI showing a change the server rejected."
+tags: "tanstack-query, mutations, optimistic-updates, rollback"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-optimistic-updates.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule mut-optimistic-updates (MIT, notice retained in NOTICE.md): merged with the Fabrica rule on deriving mutation decisions once, reframed from always-optimistic to how to do it safely, restructured to the rule template, and made cache updaters handle missing data."
 ---
 
-## mut-optimistic-updates: Implement Optimistic Updates for Responsive UI
+## Make optimistic updates reversible, and decide them once
 
-## Explanation
+When a mutation updates the UI before the server responds, cancel in-flight queries for the affected keys, snapshot their data, apply the update, roll back on error, and invalidate when the mutation settles.
+Decide in `onMutate` whether the optimistic change applies, and read that decision in later callbacks instead of recomputing it.
 
-Optimistic updates immediately reflect changes in the UI before the server confirms them, creating a snappy user experience. Implement them for user-initiated mutations where the expected outcome is predictable.
+### Implementation
 
-## Bad Example
+- Choose the approach by where the change appears:
+  - **Only in the component that triggers the mutation:** render the pending `variables` from `useMutation` while `isPending`, without touching the cache.
+  - **In several places:** update the cache in `onMutate`.
+- For cache updates, in `onMutate`:
+  1. Await `cancelQueries` for the affected keys, so an in-flight fetch cannot overwrite the optimistic value.
+  2. Snapshot the current data with `getQueryData`.
+  3. Write the optimistic value with `setQueryData`, handling the case where no data is cached yet.
+  4. Return the decision, the snapshot, and any derived values.
+- In `onError`, restore the snapshot when the update was applied.
+- In `onSettled`, invalidate the affected keys and return the promise, so the cache matches the server whether the mutation succeeded or failed.
+- In TanStack Query v5, the value returned from `onMutate` reaches later callbacks as `onMutateResult`: the third argument of `onError` and `onSuccess`, and the fourth of `onSettled`.
+  The final argument is a separate `MutationFunctionContext`.
+- Return a discriminated result, such as `{ applied: false } | { applied: true; previous: Todo | undefined }`, and branch on it in later callbacks.
+- `onMutate` cannot cancel the mutation; the request still runs.
+  To prevent it, check before calling `mutate` or inside `mutationFn`.
+- Skip optimistic updates when the server's result is hard to predict, such as when it assigns values the client cannot know.
+
+### Rationale
+
+An optimistic update shows a result the server has not confirmed.
+A refetch already in flight can resolve after the optimistic write and overwrite it, so the change seems to disappear.
+If the server rejects the change, the UI must return to the real state.
+Deriving the "does this apply?" decision separately in each callback lets rollback and invalidation disagree with the original write.
+
+### Examples
+
+#### Application: A cache update used in several places
+
+**Incorrect (counterexample):**
 
 ```tsx
-// No optimistic update - UI waits for server response
-const mutation = useMutation({
+const toggleTodo = useMutation({
   mutationFn: toggleTodoComplete,
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['todos'] })
+  onMutate: (todoId: number) => {
+    queryClient.setQueryData<Array<Todo>>(['todos'], (old) =>
+      old?.map((todo) => (todo.id === todoId ? { ...todo, completed: !todo.completed } : todo)),
+    );
   },
-})
-
-// User clicks checkbox, waits 200-500ms for visual feedback
+});
 ```
 
-## Good Example: Via Cache Manipulation
+A refetch in flight can overwrite the toggle, a failure leaves the wrong state on screen, and nothing resynchronizes with the server.
+
+**Correct:**
 
 ```tsx
-const mutation = useMutation({
+const toggleTodo = useMutation({
   mutationFn: toggleTodoComplete,
-  onMutate: async (todoId) => {
-    // 1. Cancel outgoing refetches to prevent overwriting optimistic update
-    await queryClient.cancelQueries({ queryKey: ['todos'] })
-
-    // 2. Snapshot previous value for potential rollback
-    const previousTodos = queryClient.getQueryData(['todos'])
-
-    // 3. Optimistically update the cache
-    queryClient.setQueryData(['todos'], (old: Todo[]) =>
-      old.map((todo) =>
-        todo.id === todoId ? { ...todo, completed: !todo.completed } : todo
-      )
-    )
-
-    // 4. Return context for rollback
-    return { previousTodos }
+  onMutate: async (todoId: number) => {
+    await queryClient.cancelQueries({ queryKey: ['todos'] });
+    const previous = queryClient.getQueryData<Array<Todo>>(['todos']);
+    queryClient.setQueryData<Array<Todo>>(['todos'], (old) =>
+      old?.map((todo) => (todo.id === todoId ? { ...todo, completed: !todo.completed } : todo)),
+    );
+    return { previous };
   },
-  onError: (err, todoId, context) => {
-    // Rollback on error
-    queryClient.setQueryData(['todos'], context?.previousTodos)
+  onError: (_error, _todoId, onMutateResult) => {
+    queryClient.setQueryData(['todos'], onMutateResult?.previous);
   },
-  onSettled: () => {
-    // Refetch to ensure consistency regardless of success/failure
-    queryClient.invalidateQueries({ queryKey: ['todos'] })
-  },
-})
+  onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
+});
 ```
 
-## Good Example: Via UI Variables (Simpler)
+#### Application: A decision shared by several callbacks
+
+**Incorrect (counterexample):**
 
 ```tsx
-// When mutation only affects local UI, use mutation state directly
-function TodoItem({ todo }: { todo: Todo }) {
-  const mutation = useMutation({
-    mutationFn: toggleTodoComplete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
-    },
-  })
-
-  // Show optimistic state while pending
-  const displayCompleted = mutation.isPending
-    ? !todo.completed  // Optimistic: show toggled state
-    : todo.completed   // Settled: show actual state
-
-  return (
-    <div>
-      <input
-        type="checkbox"
-        checked={displayCompleted}
-        disabled={mutation.isPending}
-        onChange={() => mutation.mutate(todo.id)}
-      />
-      <span style={{ opacity: mutation.isPending ? 0.5 : 1 }}>
-        {todo.title}
-      </span>
-    </div>
-  )
-}
+onMutate: async ({ id, patch }) => {
+  const title = normalizedTitle(patch);
+  if (!title) return;
+  // ...apply the optimistic title and return the snapshot
+},
+onError: (_error, { patch }, onMutateResult) => {
+  if (!normalizedTitle(patch) || !onMutateResult) return;
+  queryClient.setQueryData(todoKey, onMutateResult.previous);
+},
+onSettled: (_data, _error, { patch }) => {
+  if (!normalizedTitle(patch)) return;
+  return queryClient.invalidateQueries({ queryKey: todoKey });
+},
 ```
 
-## Good Example: Optimistic Create with Temporary ID
+The same decision is recomputed in three places, and any difference between the copies makes rollback or invalidation disagree with the write.
+
+**Correct:**
 
 ```tsx
-const createTodo = useMutation({
-  mutationFn: (newTodo: CreateTodoInput) => api.createTodo(newTodo),
-  onMutate: async (newTodo) => {
-    await queryClient.cancelQueries({ queryKey: ['todos'] })
-    const previousTodos = queryClient.getQueryData(['todos'])
+type RenameResult = { applied: false } | { applied: true; previous: Todo | undefined };
 
-    // Add with temporary ID
-    const optimisticTodo = {
-      id: `temp-${Date.now()}`,
-      ...newTodo,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    }
-
-    queryClient.setQueryData(['todos'], (old: Todo[]) => [...old, optimisticTodo])
-
-    return { previousTodos, optimisticTodo }
-  },
-  onError: (err, newTodo, context) => {
-    queryClient.setQueryData(['todos'], context?.previousTodos)
-  },
-  onSuccess: (data, variables, context) => {
-    // Replace temp todo with real one
-    queryClient.setQueryData(['todos'], (old: Todo[]) =>
-      old.map((todo) =>
-        todo.id === context?.optimisticTodo.id ? data : todo
-      )
-    )
-  },
-})
+onMutate: async ({ patch }): Promise<RenameResult> => {
+  const title = normalizedTitle(patch);
+  if (!title) return { applied: false };
+  await queryClient.cancelQueries({ queryKey: todoKey });
+  const previous = queryClient.getQueryData<Todo>(todoKey);
+  queryClient.setQueryData<Todo>(todoKey, (todo) => (todo ? { ...todo, title } : todo));
+  return { applied: true, previous };
+},
+onError: (_error, _variables, onMutateResult) => {
+  if (onMutateResult?.applied) queryClient.setQueryData(todoKey, onMutateResult.previous);
+},
+onSettled: (_data, _error, _variables, onMutateResult) => {
+  if (onMutateResult?.applied) return queryClient.invalidateQueries({ queryKey: todoKey });
+},
 ```
 
-## When to Use Each Approach
+`todoKey` is defined once in the hook body, and later callbacks read the decision from `onMutateResult`.
 
-| Approach | Use When |
-|----------|----------|
-| Cache Manipulation | Update appears in multiple places, complex data structures |
-| UI Variables | Update only visible in one component, simpler implementation |
+### Validation
 
-## Context
+Make the mutation fail, such as by blocking the request in the browser, and check that the UI returns to the previous state.
+Trigger a refetch while the mutation is pending and check that the optimistic value is not overwritten.
+Check that later callbacks read `onMutateResult` rather than re-deriving decisions from the variables.
 
-- Always provide rollback logic in `onError`
-- Cancel queries before optimistic update to prevent race conditions
-- Call `invalidateQueries` in `onSettled` to sync with server truth
-- For forms, consider if validation should block optimistic display
-- Test error scenarios to verify rollback works correctly
-
-Source: [TanStack Agent Skills - tanstack-query/mut-optimistic-updates.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-optimistic-updates.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A mutation without an optimistic update is not a violation of this rule.

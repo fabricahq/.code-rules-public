@@ -1,127 +1,70 @@
 ---
-title: "mut-invalidate-queries: Always Invalidate Related Queries After Mutations"
-whenToRead: "Before implementing or reviewing a TanStack Query mutation that changes data represented by cached queries."
+title: "Invalidate or update every query a mutation changes"
+whenToRead: "Before planning, writing, changing, or reviewing a TanStack Query mutation, or diagnosing UI that shows outdated data after a save."
 impact: "HIGH"
-impactDescription: "keeps cached reads synchronized after writes change server state"
-tags: "tanstack-query, mutations, invalidation, cache, server-state"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-invalidate-queries.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/mut-invalidate-queries.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Cached queries that a mutation changed but did not invalidate keep showing outdated data until something else refetches them."
+tags: "tanstack-query, mutations, invalidation, cache"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-invalidate-queries.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule mut-invalidate-queries (MIT, notice retained in NOTICE.md): merged the targeted-invalidation rule, restructured to the rule template, and corrected when invalidation refetches."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/cache-invalidation.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule cache-invalidation (MIT, notice retained in NOTICE.md): merged the targeted-invalidation rule, restructured to the rule template, and corrected when invalidation refetches."
 ---
 
-## mut-invalidate-queries: Always Invalidate Related Queries After Mutations
+## Invalidate or update every query a mutation changes
 
-## Explanation
+After a mutation succeeds, invalidate every cached query whose data it may have changed, or write the server's response into the cache when it contains the complete new value.
+Use the narrowest key prefix that still covers every affected query.
 
-After mutations, invalidate all queries whose data might be affected. This ensures the cache stays synchronized with the server. Forgetting to invalidate related queries leads to stale UI data.
+### Implementation
 
-## Bad Example
+- List what the mutation changes: the entity itself, lists and filtered views that contain it, counts and summaries, and related entities.
+- Invalidate them in `onSuccess`, or in `onSettled` when an optimistic update must be reconciled after failure too.
+- Return or await the `invalidateQueries` promise, so the mutation stays pending until the refetch finishes and the UI does not flash outdated data.
+- When the response contains the full updated entity, write it with `setQueryData` for that entity's key, and invalidate lists and aggregates that may also have changed.
+- Prefer a prefix that covers what changed, such as `todoQueries.lists()`.
+  When unsure, invalidate a slightly broader prefix; an extra refetch of an active query costs less than outdated data.
+- Do not call `invalidateQueries()` with no filter; it refetches every active query in the app.
+
+### Rationale
+
+Invalidation marks matching queries stale and immediately refetches the active ones, the queries currently used by a mounted component.
+Inactive queries refetch the next time a component uses them.
+A query left out keeps its cached value, so the UI contradicts what the user just saved.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// No invalidation - cache remains stale
-const createTodo = useMutation({
-  mutationFn: (newTodo) => api.createTodo(newTodo),
-  // Missing onSuccess handler - todo list won't show new item
-})
-
-// Partial invalidation - misses related queries
 const deleteTodo = useMutation({
-  mutationFn: (todoId) => api.deleteTodo(todoId),
+  mutationFn: (todoId: number) => api.deleteTodo(todoId),
   onSuccess: () => {
-    // Only invalidates list, not summary/counts
-    queryClient.invalidateQueries({ queryKey: ['todos', 'list'] })
-    // Missing: ['todos', 'count'], ['todos', 'completed-count'], etc.
+    queryClient.invalidateQueries({ queryKey: ['todos', 'list'] });
   },
-})
+});
 ```
 
-## Good Example
+The todo count shown in the header, cached under `['todos', 'count']`, still includes the deleted todo.
+
+**Correct:**
 
 ```tsx
-// Comprehensive invalidation
-const createTodo = useMutation({
-  mutationFn: (newTodo) => api.createTodo(newTodo),
-  onSuccess: () => {
-    // Invalidate all todo-related queries
-    queryClient.invalidateQueries({ queryKey: ['todos'] })
+const deleteTodo = useMutation({
+  mutationFn: (todoId: number) => api.deleteTodo(todoId),
+  onSuccess: (_data, todoId) => {
+    queryClient.removeQueries({ queryKey: todoQueries.detail(todoId).queryKey });
+    return queryClient.invalidateQueries({ queryKey: todoQueries.all() });
   },
-})
-
-// Targeted invalidation with all affected queries
-const updateTodo = useMutation({
-  mutationFn: ({ id, data }) => api.updateTodo(id, data),
-  onSuccess: (data, { id }) => {
-    // Specific todo
-    queryClient.invalidateQueries({ queryKey: ['todos', id] })
-    // Lists that might contain this todo
-    queryClient.invalidateQueries({ queryKey: ['todos', 'list'] })
-    // If todo status changed, invalidate filtered views
-    queryClient.invalidateQueries({ queryKey: ['todos', 'completed'] })
-    queryClient.invalidateQueries({ queryKey: ['todos', 'active'] })
-  },
-})
-
-// Cross-entity invalidation
-const assignTodoToUser = useMutation({
-  mutationFn: ({ todoId, userId }) => api.assignTodo(todoId, userId),
-  onSuccess: (data, { todoId, userId }) => {
-    // Invalidate the todo
-    queryClient.invalidateQueries({ queryKey: ['todos', todoId] })
-    // Invalidate user's assigned todos
-    queryClient.invalidateQueries({ queryKey: ['users', userId, 'todos'] })
-    // Invalidate previous assignee's list if available
-    if (data.previousAssignee) {
-      queryClient.invalidateQueries({
-        queryKey: ['users', data.previousAssignee, 'todos'],
-      })
-    }
-  },
-})
+});
 ```
 
-## Pattern: Mutation with Variables Access
+`todoQueries` is the entity's query options factory.
+The deleted todo's detail entry is removed, every list and count under `['todos']` refetches, and the mutation stays pending until they do.
 
-```tsx
-const mutation = useMutation({
-  mutationFn: updatePost,
-  onSuccess: (
-    data,      // Server response
-    variables, // What you passed to mutate()
-    context    // What onMutate returned
-  ) => {
-    // Use variables to know which queries to invalidate
-    queryClient.invalidateQueries({ queryKey: ['posts', variables.id] })
-    queryClient.invalidateQueries({ queryKey: ['posts', 'list', variables.category] })
-  },
-})
-```
+### Validation
 
-## Pattern: Invalidate or Update Directly
+For each mutation, list the screens that display data it changes, and check that each of their query keys is invalidated or updated.
+After running the mutation in the app, check that every such screen shows the new data without a manual reload.
 
-```tsx
-// Option 1: Invalidate and refetch
-onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ['todos'] })
-}
-
-// Option 2: Update cache directly (no network request)
-onSuccess: (newTodo) => {
-  queryClient.setQueryData(['todos'], (old: Todo[]) => [...old, newTodo])
-}
-
-// Option 3: Hybrid - update one, invalidate others
-onSuccess: (newTodo) => {
-  // Immediately add to list
-  queryClient.setQueryData(['todos', 'list'], (old: Todo[]) => [...old, newTodo])
-  // Invalidate counts/summaries for eventual consistency
-  queryClient.invalidateQueries({ queryKey: ['todos', 'count'] })
-}
-```
-
-## Context
-
-- Place invalidation in `onSuccess` for successful mutations
-- Use `onSettled` if you want to invalidate regardless of success/failure
-- Think about all UI surfaces that display related data
-- For complex relationships, consider a centralized invalidation helper
-- Using hierarchical query keys makes this easier (see `qk-hierarchical-organization`)
-
-Source: [TanStack Agent Skills - tanstack-query/mut-invalidate-queries.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/mut-invalidate-queries.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Updating the cache directly from a complete server response instead of invalidating is not a violation.

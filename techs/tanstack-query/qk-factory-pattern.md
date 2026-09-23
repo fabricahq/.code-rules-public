@@ -1,111 +1,74 @@
 ---
-title: "qk-factory-pattern: Use Query Key Factories for Complex Applications"
-whenToRead: "Before organizing many TanStack Query keys shared across features, cache updates, or invalidation calls."
+title: "Define hierarchical query keys and options in factories"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Query keys that several components, prefetches, or invalidations share, or when adding queries for a new entity."
 impact: "MEDIUM"
-impactDescription: "centralizes query-key construction so cache access stays consistent as the app grows"
-tags: "tanstack-query, query-keys, factories, type-safety, cache"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-factory-pattern.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-query/rules/qk-factory-pattern.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Keys written by hand in many places drift apart, so invalidation and prefetching miss entries that were meant to match."
+tags: "tanstack-query, query-keys, queryOptions, invalidation"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-factory-pattern.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-factory-pattern (MIT, notice retained in NOTICE.md): merged the hierarchical-organization rule, restructured to the rule template, and made queryOptions factories the primary pattern."
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-hierarchical-organization.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule qk-hierarchical-organization (MIT, notice retained in NOTICE.md): merged the hierarchical-organization rule, restructured to the rule template, and made queryOptions factories the primary pattern."
 ---
 
-## qk-factory-pattern: Use Query Key Factories for Complex Applications
+## Define hierarchical query keys and options in factories
 
-## Explanation
+Build each entity's query keys from general to specific, such as entity, then kind, then ID or filters, and define them, together with their query functions, in one factory per entity.
+Use the factory everywhere the query is read, prefetched, updated, or invalidated.
 
-For applications with many queries, centralize query key definitions in factory functions. This ensures consistency, enables autocomplete, prevents typos, and makes refactoring safer. Query key factories are the recommended pattern for production applications.
+### Implementation
 
-## Bad Example
+- Start every key for an entity with the same prefix, such as `['todos']`, then add a kind such as `'list'` or `'detail'`, then the ID or filters.
+- Define factory functions that return `queryOptions({ queryKey, queryFn, ... })`, so the key, query function, and per-query options stay together and types flow to `useQuery`, `prefetchQuery`, and `getQueryData`.
+- Expose prefix helpers, such as `todoQueries.all()` or `todoKeys.lists()`, for invalidation at each level.
+- A small app with a handful of queries can inline keys; add a factory when the same key is written in more than one place.
+
+### Rationale
+
+TanStack Query matches keys by prefix for invalidation and cache filters.
+A consistent hierarchy lets one call target exactly the right level, such as every list of todos or one todo and its sub-resources.
+Keys typed by hand in many files drift, such as `'todo'` in one place and `'todos'` in another, and the mismatch silently skips cache entries.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Scattered, inconsistent key definitions across files
-// file: components/TodoList.tsx
-const { data } = useQuery({
-  queryKey: ['todos', 'list'],
-  queryFn: fetchTodos,
-})
+useQuery({ queryKey: ['todos', 'list', filters], queryFn: () => fetchTodos(filters) });
+useQuery({ queryKey: ['todo', id], queryFn: () => fetchTodo(id) });
 
-// file: components/TodoDetail.tsx
-const { data } = useQuery({
-  queryKey: ['todo', id],  // Inconsistent: 'todo' vs 'todos'
-  queryFn: () => fetchTodo(id),
-})
-
-// file: components/TodoComments.tsx
-const { data } = useQuery({
-  queryKey: ['todoComments', todoId],  // Different naming convention
-  queryFn: () => fetchComments(todoId),
-})
-
-// Invalidation is error-prone
-queryClient.invalidateQueries({ queryKey: ['todos'] })  // Misses 'todo' and 'todoComments'
+queryClient.invalidateQueries({ queryKey: ['todos'] });
 ```
 
-## Good Example
+The detail query uses `'todo'`, so invalidating `['todos']` misses it.
+
+**Correct:**
 
 ```tsx
-// file: lib/query-keys.ts
-export const todoKeys = {
-  all: ['todos'] as const,
-  lists: () => [...todoKeys.all, 'list'] as const,
-  list: (filters: TodoFilters) => [...todoKeys.lists(), filters] as const,
-  details: () => [...todoKeys.all, 'detail'] as const,
-  detail: (id: number) => [...todoKeys.details(), id] as const,
-  comments: (id: number) => [...todoKeys.detail(id), 'comments'] as const,
-}
-
-export const userKeys = {
-  all: ['users'] as const,
-  detail: (id: string) => [...userKeys.all, id] as const,
-  posts: (id: string) => [...userKeys.detail(id), 'posts'] as const,
-}
-
-// file: components/TodoList.tsx
-import { todoKeys } from '@/lib/query-keys'
-
-const { data } = useQuery({
-  queryKey: todoKeys.list({ status: 'active' }),
-  queryFn: () => fetchTodos({ status: 'active' }),
-})
-
-// file: components/TodoDetail.tsx
-const { data } = useQuery({
-  queryKey: todoKeys.detail(id),
-  queryFn: () => fetchTodo(id),
-})
-
-// Invalidation is type-safe and predictable
-queryClient.invalidateQueries({ queryKey: todoKeys.all })  // Invalidates everything
-queryClient.invalidateQueries({ queryKey: todoKeys.detail(5) })  // Specific todo + comments
-```
-
-## Query Options Factory Pattern
-
-```tsx
-// Even better: combine with queryOptions for full type safety
-import { queryOptions } from '@tanstack/react-query'
-
 export const todoQueries = {
-  all: () => queryOptions({
-    queryKey: todoKeys.all,
-    queryFn: fetchAllTodos,
-  }),
-  detail: (id: number) => queryOptions({
-    queryKey: todoKeys.detail(id),
-    queryFn: () => fetchTodo(id),
-    staleTime: 5 * 60 * 1000,
-  }),
-}
+  all: () => ['todos'] as const,
+  lists: () => [...todoQueries.all(), 'list'] as const,
+  list: (filters: TodoFilters) =>
+    queryOptions({
+      queryKey: [...todoQueries.lists(), filters] as const,
+      queryFn: () => fetchTodos(filters),
+    }),
+  detail: (id: number) =>
+    queryOptions({
+      queryKey: [...todoQueries.all(), 'detail', id] as const,
+      queryFn: () => fetchTodo(id),
+      staleTime: 5 * 60 * 1000,
+    }),
+};
 
-// Usage
-const { data } = useQuery(todoQueries.detail(5))
-await queryClient.prefetchQuery(todoQueries.detail(5))
+useQuery(todoQueries.detail(id));
+await queryClient.prefetchQuery(todoQueries.list({ status: 'active' }));
+queryClient.invalidateQueries({ queryKey: todoQueries.lists() });
+queryClient.invalidateQueries({ queryKey: todoQueries.all() });
 ```
 
-## Context
+### Validation
 
-- Essential for applications with 10+ different query types
-- Enables IDE autocomplete and typo prevention
-- Makes invalidation patterns discoverable
-- Pairs well with `queryOptions` for full type inference
-- Consider the `@lukemorales/query-key-factory` package for standardized implementation
+Search for query keys written as literals outside the factory, and check that each entity's keys share one prefix.
 
-Source: [TanStack Agent Skills - tanstack-query/qk-factory-pattern.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-query/rules/qk-factory-pattern.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+Inline keys in a small app where each key appears once are not a violation.
