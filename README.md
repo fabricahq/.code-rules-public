@@ -1,94 +1,348 @@
-# Fabrica public rules
+<h1 align="center">Fabrica public rules</h1>
 
-This repository is Fabrica's canonical public rule library. Its engineering rules can be shared across projects and given to coding agents.
+<h3 align="center">Engineering rules your coding agents can actually&nbsp;follow.</h3>
 
-Each rule explains an engineering expectation, when it applies, and how to check whether a change follows it. Start with one group, read its rules, and adopt the guidance that fits your project.
+<p align="center">
+  119 rules for testing, code design, TypeScript, React, TanStack, Zustand, Playwright, and Go.
+  Each one says what to do, when it applies, and how a reviewer can tell it was&nbsp;followed.
+</p>
 
-## How this fits with Code Rules
+<p align="center">
+  <a href="LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+  <a href="https://github.com/fabricahq/code-rules"><img alt="A Code Rules library" src="https://img.shields.io/badge/Code%20Rules-library-6f42c1"></a>
+  <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
+</p>
 
-[Code Rules](https://github.com/fabricahq/code-rules) is the tool that imports, versions, and prepares rules for agents to read. This repository supplies a collection of rules that the tool can import.
+<p align="center">
+  <a href="#use-these-rules">Use these rules</a> ·
+  <a href="#browse-the-rules">Browse the rules</a> ·
+  <a href="#whats-in-a-rule">What's in a rule</a> ·
+  <a href="https://github.com/fabricahq/code-rules">Code Rules</a>
+</p>
 
-Projects can combine this library with other public or private libraries. You can also write local rules, exclude imported rules, or replace them to fit your needs. These practices are choices for your project, not requirements for using Code Rules.
+---
 
-Giving an agent a rule does not guarantee compliance. Ask your agent to read the relevant rules before implementation and use them during review, alongside your tests and other checks.
+Agents write code fast, but left alone they skip regression tests, silence the type checker, await independent requests one at a time, and re-render more than they need to. A one-line rule like _"always write tests"_ doesn't fix that: agents apply it everywhere or nowhere.
 
-## What's included
+The rules in this library are written to hold up during both implementation and review. Every rule states one obligation, the situations it covers, the exceptions where it doesn't apply, a correct and incorrect example for each case, and the evidence a reviewer should look for. They're built to be imported with [Code Rules](https://github.com/fabricahq/code-rules), the package manager for engineering rules, but each one is plain Markdown you can read on its own.
+
+## What's inside
 
 | Group | Rules | What it helps with |
-| --- | --- | --- |
+| --- | --: | --- |
+| [Testing](practices/testing/) | 8 | Choose tests by risk, test at the lowest layer, keep tests independent, reproduce bugs before fixing them, cover boundary cases, and name and run tests well |
 | [Code design](practices/code-design/) | 3 | Express operations as meaningful steps, separate pure computation from effects, and organize code by feature |
 | [Performance](practices/performance/) | 1 | Remove repeated work from measured hot paths |
-| [Testing](practices/testing/) | 8 | Choose tests by risk, test at the lowest layer, keep tests independent, test behavior, reproduce bugs, cover boundary cases, and name and run tests well |
-| [Go](techs/go/) | 4 | Document fields and packages, and give errors context and deliberate contracts |
-| [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
+| [TypeScript](techs/typescript/) | 19 | Model data, preserve contracts, and keep code understandable |
 | [JavaScript](techs/javascript/) | 7 | Coordinate async work, use browser APIs efficiently, and keep paths analyzable |
-| [Playwright](techs/playwright/) | 2 | Synchronize with retrying assertions and use scoped, user-facing locators |
-| [React](techs/react/) | 39 | Structure components, manage state, and avoid unnecessary work |
+| [React](techs/react/) | 39 | Structure components, manage state, and avoid unnecessary work, including server-rendered React |
 | [TanStack Query](techs/tanstack-query/) | 15 | Manage query keys, caching, mutations, and hydration |
 | [TanStack Router](techs/tanstack-router/) | 10 | Structure routes, validate inputs, and coordinate data loading |
-| [TypeScript](techs/typescript/) | 19 | Model data, preserve contracts, and keep code understandable |
 | [Zustand](techs/zustand/) | 10 | Design stores, subscriptions, and persistence |
+| [Playwright](techs/playwright/) | 2 | Synchronize with retrying assertions and use scoped, user-facing locators |
+| [Go](techs/go/) | 4 | Document fields and packages, and give errors context and deliberate contracts |
+| [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
 
-The 119 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
+**Practice groups** (`practices/`) apply in any language; their TypeScript examples illustrate the ideas. **Technology groups** (`techs/`) cover one language, framework, or tool. Import only the groups your project uses, and exclude or replace any single rule.
 
-Practice groups apply across languages. Their TypeScript examples illustrate the ideas; they do not limit those practices to TypeScript projects.
+## Use these rules
 
-The library contains source rules and group metadata:
-
-```text
-rule-library.yaml        Library format and license information
-practices/               Practices that apply across technologies
-  code-design/
-  performance/
-  testing/
-techs/                   Guidance for a specific technology
-  typescript/
-```
-
-Each group includes `_group.yaml` metadata and one Markdown file per rule. For format details, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
-
-## Use the library
-
-The library manifest (`rule-library.yaml`) and group metadata (`_group.yaml`) use YAML.
-
-The first release, `v0.1.0`, must be published before the commands below work. Until then, the proposed library is available for review in this repository's pull requests.
-
-After that release, [install Code Rules](https://code-rules.fabricahq.com/start-here/install/) and run these commands from your project's root:
+**1. Install [Code Rules](https://code-rules.fabricahq.com/start-here/install/)**, then import the groups you want from your project's root:
 
 ```sh
 code-rules project init
 code-rules project add library fabrica \
   --repository https://github.com/fabricahq/.code-rules-public.git \
   --ref v0.1.0 \
-  --groups practices/code-design
+  --groups practices/testing \
+  --groups techs/typescript
 code-rules project sync
-code-rules project check
 ```
 
-This imports only the Code design group. In the proposed `v0.1.0` release, that group contains one rule: [Express operations as meaningful steps](practices/code-design/express-operations-as-meaningful-steps.md).
+> [!NOTE]
+> `v0.1.0` hasn't been tagged yet. Until it is, pass a full commit SHA from `main` to `--ref` instead.
 
-Open `.code-rules/generated/RULES.md` to read the generated guidance. Then connect it to your agent's project instructions using the [first-project walkthrough](https://code-rules.fabricahq.com/start-here/set-up-project/).
+Use `--groups 'practices/*'`, `--groups 'techs/*'`, or `--groups '*'` to take a whole category at once.
 
-To select more groups, repeat `--groups` for each group ID when adding the source. Pin a published tag or full commit so your project adopts updates deliberately. For exclusions and replacements, see [Import rules](https://code-rules.fabricahq.com/guides/select-rules/).
+**2. Point your agent at the result.** Sync writes `.code-rules/generated/RULES.md`, an index that tells your agent which groups to open for each task:
 
-## Propose a change
+```md
+### Testing
 
-Open a pull request with the rule change and the problem it addresses. Keep each rule focused on one expectation, with examples, applicability, exceptions where needed, and a way to verify compliance.
+**Description:** Spend test effort where bugs are likely and costly, prove each behavior at the lowest
+layer that can, keep tests independent and focused on observable behavior, cover regressions and
+boundary cases, and name and run tests for clear feedback.
 
-Follow the [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/) and run this command from the library root:
+**When to read this group:** When adding or changing behavior, fixing a bug, or writing, running,
+and reviewing tests.
+
+**Open group:** [Testing](groups/practices/testing.md)
+```
+
+Add the [project instructions snippet](https://code-rules.fabricahq.com/start-here/set-up-project/#5-give-the-rules-to-your-agent) to your `AGENTS.md` or `CLAUDE.md`, and commit `.code-rules/`. Every agent working in the repository now reads the same rules, pinned to the same commit, with the license and attribution of each rule preserved.
+
+**3. Make it yours.** Disagree with a rule? [Exclude it or replace it](https://code-rules.fabricahq.com/guides/select-rules/) with your own version in `.code-rules/config.yaml`, with a recorded reason. Everything else keeps receiving upstream improvements when you sync.
+
+## What's in a rule
+
+Here's an abridged version of [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md):
+
+```md
+---
+title: "Reproduce bugs with regression tests"
+whenToRead: "Before planning, diagnosing, fixing, or reviewing the fix for a behavior defect, ..."
+impact: "HIGH"
+impactDescription: "Prevents a fixed bug from returning unnoticed in a later change."
+---
+
+## Reproduce bugs with regression tests
+
+Before fixing a behavior defect, write a test that reproduces the reported failure and confirm that it fails.
+Then apply the fix, confirm that the test passes, and keep the test with the change.
+
+### Implementation
+...
+A change with no behavior to observe, such as correcting a typo in a comment, needs no regression test.
+
+### Rationale
+A test written after a fix may never have been able to fail. ...
+
+### Examples
+#### Application: A logic bug a unit test can reproduce
+**Incorrect (counterexample):** Fix the comparison, then add a test containing only lowercase names.
+The test would have passed before the fix, so it does not guard the bug.
+**Correct:** Before fixing, sort `alpha`, `Beta`, and `gamma` ... confirm that the test fails ...
+
+### Validation
+Look for evidence that the test failed for the original symptom before the fix and passes after it. ...
+```
+
+Every rule in the library follows the same shape:
+
+- **One obligation, stated first.** No rule bundles several expectations, so you can adopt or drop each one independently.
+- **A reading cue.** `whenToRead` tells an agent when to open the rule, so a 119-rule library doesn't flood every task's context.
+- **Boundaries and exceptions.** Rules say where they stop applying, so agents don't overapply them.
+- **Incorrect and correct examples** for each distinct situation the rule covers.
+- **Validation guidance** that tells a reviewing agent what counts as evidence of a violation, and what doesn't.
+- **Attribution** in the metadata of every rule adapted from another source.
+
+Rules are written and reviewed against the Code Rules [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/). The testing rules also share a [testing philosophy](assets/testing-philosophy.md), based on Yevgeniy Brikman's talk _Agility Requires Safety_, which explains the reasoning behind them.
+
+## Browse the rules
+
+<details>
+<summary><strong>Testing</strong> · 8 rules</summary>
+
+- [Choose tests by risk and cost](practices/testing/choose-tests-by-risk.md)
+- [Cover empty inputs and boundaries](practices/testing/cover-boundary-cases.md)
+- [Keep tests independent](practices/testing/keep-tests-independent.md)
+- [Name tests for the behavior and the condition](practices/testing/name-tests-for-behavior-and-condition.md)
+- [Run focused tests while iterating, and the full suite before finishing](practices/testing/run-focused-tests-while-iterating.md)
+- [Test at the lowest layer that proves the behavior](practices/testing/test-at-the-lowest-layer.md)
+- [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md)
+- [Test observable behavior](practices/testing/test-observable-behavior.md)
+
+</details>
+
+<details>
+<summary><strong>Code design</strong> · 3 rules</summary>
+
+- [Express operations as meaningful steps](practices/code-design/express-operations-as-meaningful-steps.md)
+- [Organize code by feature](practices/code-design/organize-code-by-feature.md)
+- [Separate pure computation from effects](practices/code-design/separate-pure-computation-from-effects.md)
+
+</details>
+
+<details>
+<summary><strong>Performance</strong> · 1 rule</summary>
+
+- [Optimize measured hot paths by removing repeated work](practices/performance/optimize-measured-hot-paths.md)
+
+</details>
+
+<details>
+<summary><strong>TypeScript</strong> · 19 rules</summary>
+
+- [Annotate types at module boundaries and where they narrow](techs/typescript/annotate-types-at-boundaries.md)
+- [Avoid silencing the type checker](techs/typescript/avoid-silencing-the-type-checker.md)
+- [Comment the role, the result, and the hidden constraint](techs/typescript/comment-role-result-and-constraints.md)
+- [Declare constants with as const, and satisfies when a type exists](techs/typescript/declare-constants-with-as-const.md)
+- [Distinguish null from undefined](techs/typescript/distinguish-null-from-undefined.md)
+- [Generate service types from their contracts](techs/typescript/generate-service-types-from-contracts.md)
+- [Model distinct states as discriminated unions](techs/typescript/model-variants-as-discriminated-unions.md)
+- [Narrow unknown values before use](techs/typescript/narrow-unknown-values.md)
+- [Prefer literal unions over enums](techs/typescript/prefer-literal-unions-over-enums.md)
+- [Prefer type aliases over interfaces](techs/typescript/prefer-type-aliases.md)
+- [Preserve caller-owned data](techs/typescript/preserve-caller-owned-data.md)
+- [Make properties and parameters required, and name them](techs/typescript/require-properties-and-name-parameters.md)
+- [Import types with import type](techs/typescript/separate-type-imports.md)
+- [Use Boolean() for explicit boolean coercion](techs/typescript/use-boolean-for-explicit-boolean-coercion.md)
+- [Follow consistent naming conventions](techs/typescript/use-consistent-naming.md)
+- [Use one array type syntax](techs/typescript/use-generic-array-types.md)
+- [Use named exports](techs/typescript/use-named-exports.md)
+- [Use predictable file names](techs/typescript/use-predictable-file-names.md)
+- [Use template literal types for patterned strings](techs/typescript/use-template-literal-types-for-patterned-strings.md)
+
+</details>
+
+<details>
+<summary><strong>JavaScript</strong> · 7 rules</summary>
+
+- [Avoid layout thrashing](techs/javascript/avoid-layout-thrashing.md)
+- [Await only on paths that need the result](techs/javascript/await-only-on-paths-that-need-the-result.md)
+- [Defer non-critical browser work to idle time](techs/javascript/defer-non-critical-work-to-idle-time.md)
+- [Keep dynamic import and file paths statically analyzable](techs/javascript/keep-import-and-file-paths-analyzable.md)
+- [Start independent asynchronous work concurrently](techs/javascript/start-independent-async-work-concurrently.md)
+- [Mark scroll-related listeners passive when they never cancel scrolling](techs/javascript/use-passive-scroll-and-touch-listeners.md)
+- [Version and minimize data in browser storage](techs/javascript/version-and-minimize-browser-storage.md)
+
+</details>
+
+<details>
+<summary><strong>React</strong> · 39 rules</summary>
+
+- [Give every interactive element a role and an accessible name](techs/react/accessibility-roles-and-names.md)
+- [Run app-wide initialization once per app load](techs/react/advanced-init-once.md)
+- [Build complex components from composable parts](techs/react/architecture-compound-components.md)
+- [Create explicit component variants instead of boolean mode props](techs/react/architecture-explicit-variants.md)
+- [Stream slow data behind Suspense boundaries](techs/react/async-suspense-boundaries.md)
+- [Avoid loading large barrel files](techs/react/bundle-barrel-imports.md)
+- [Keep non-critical scripts off the critical path](techs/react/bundle-defer-non-critical-scripts.md)
+- [Load heavy optional code on demand](techs/react/bundle-load-heavy-code-on-demand.md)
+- [Share client data requests through a caching data layer](techs/react/client-share-data-requests.md)
+- [Read the latest callbacks in Effects without resubscribing](techs/react/effects-read-latest-values-without-resubscribing.md)
+- [Name generic components by capability, not by first caller](techs/react/generic-components-by-capability.md)
+- [Name Effect and non-trivial Hook callbacks](techs/react/hooks-name-callbacks.md)
+- [Avoid copying props to state](techs/react/official-avoid-copying-props-to-state.md)
+- [Avoid unnecessary Effects](techs/react/official-avoid-unnecessary-effects.md)
+- [Follow the Rules of Hooks](techs/react/official-follow-rules-of-hooks.md)
+- [Keep components and Hooks pure](techs/react/official-keep-components-and-hooks-pure.md)
+- [Accept ref as a prop in React 19](techs/react/react19-no-forwardref.md)
+- [Use Activity to hide UI that should keep its state](techs/react/rendering-activity.md)
+- [Use a boolean condition for conditional rendering](techs/react/rendering-conditional-render.md)
+- [Skip off-screen rendering work in long lists](techs/react/rendering-content-visibility.md)
+- [Render client-only preferences without a flash or hydration error](techs/react/rendering-hydration-no-flicker.md)
+- [Suppress only expected hydration mismatches](techs/react/rendering-hydration-suppress-warning.md)
+- [Hint critical resources with React DOM resource APIs](techs/react/rendering-resource-hints.md)
+- [Subscribe to and depend on only the values you use](techs/react/rerender-depend-on-narrow-values.md)
+- [Use functional updates when new state depends on old state](techs/react/rerender-functional-setstate.md)
+- [Initialize expensive state lazily](techs/react/rerender-lazy-state-init.md)
+- [Keep input responsive by marking non-urgent updates](techs/react/rerender-mark-non-urgent-updates.md)
+- [Memoize deliberately](techs/react/rerender-memoize-deliberately.md)
+- [Do not define components inside components](techs/react/rerender-no-inline-components.md)
+- [Keep values that do not affect rendering in refs](techs/react/rerender-use-ref-transient-values.md)
+- [Run post-response work after the response](techs/react/server-after-nonblocking.md)
+- [Authenticate and authorize inside every Server Action](techs/react/server-auth-actions.md)
+- [Deduplicate per-request server work with cache](techs/react/server-cache-react.md)
+- [Pass only the data Client Components use](techs/react/server-minimize-serialized-props.md)
+- [Keep request data out of shared module state](techs/react/server-no-shared-module-state.md)
+- [Compose independent server data fetches as siblings](techs/react/server-parallel-fetching.md)
+- [Reuse request-independent server data across requests](techs/react/server-reuse-request-independent-data.md)
+- [Lift shared component state into a provider behind an interface](techs/react/state-lift-shared-state-into-providers.md)
+- [Give repeated and persistent surfaces stable test ids](techs/react/testing-ship-stable-e2e-scope-test-ids.md)
+
+</details>
+
+<details>
+<summary><strong>TanStack Query</strong> · 15 rules</summary>
+
+- [Use initialData only for complete data](techs/tanstack-query/cache-placeholder-vs-initial.md)
+- [Set staleTime from how fast data changes](techs/tanstack-query/cache-stale-time.md)
+- [Reset query errors when an error boundary retries](techs/tanstack-query/err-error-boundaries.md)
+- [Derive infinite query page params from the server's response](techs/tanstack-query/inf-page-params.md)
+- [Invalidate or update every query a mutation changes](techs/tanstack-query/mut-invalidate-queries.md)
+- [Read mutation state from other components with useMutationState](techs/tanstack-query/mut-mutation-state.md)
+- [Make optimistic updates reversible, and decide them once](techs/tanstack-query/mut-optimistic-updates.md)
+- [Make offline behavior explicit](techs/tanstack-query/offline-behavior.md)
+- [Fetch a dynamic set of queries with useQueries](techs/tanstack-query/parallel-use-queries.md)
+- [Derive component views of query data with a stable select](techs/tanstack-query/perf-select-transform.md)
+- [Prefetch likely next data on user intent](techs/tanstack-query/pf-intent-prefetch.md)
+- [Define hierarchical query keys and options in factories](techs/tanstack-query/qk-factory-pattern.md)
+- [Key each query by every input it uses](techs/tanstack-query/qk-include-dependencies.md)
+- [Pass the query's AbortSignal to the request](techs/tanstack-query/query-cancellation.md)
+- [Prefetch on the server and hydrate the query cache](techs/tanstack-query/ssr-dehydration.md)
+
+</details>
+
+<details>
+<summary><strong>TanStack Router</strong> · 10 rules</summary>
+
+- [Provide shared dependencies through typed router context](techs/tanstack-router/ctx-router-context.md)
+- [Throw notFound for missing resources and render it with notFoundComponent](techs/tanstack-router/err-not-found.md)
+- [With TanStack Query, load route data into the Query cache](techs/tanstack-router/load-ensure-query-data.md)
+- [Load route data in loaders, in parallel](techs/tanstack-router/load-use-loaders.md)
+- [Use Link for navigation users can open, and redirect in the router](techs/tanstack-router/nav-link-component.md)
+- [Mask modal routes with the resource's canonical URL](techs/tanstack-router/nav-route-masks.md)
+- [Set app-wide navigation behavior in router defaults](techs/tanstack-router/router-default-options.md)
+- [Validate search params with defaults at the route](techs/tanstack-router/search-validation.md)
+- [Split route components out of the main bundle](techs/tanstack-router/split-route-code.md)
+- [Register the router and read route data through typed route APIs](techs/tanstack-router/ts-route-type-inference.md)
+
+</details>
+
+<details>
+<summary><strong>Zustand</strong> · 10 rules</summary>
+
+- [Create stores once, outside render](techs/zustand/create-stores-at-module-scope.md)
+- [Define typed state and named actions](techs/zustand/define-typed-state-and-named-actions.md)
+- [Keep store state serializable](techs/zustand/keep-store-state-serializable.md)
+- [Keep each store focused on one domain](techs/zustand/keep-stores-domain-focused.md)
+- [Persist only safe, versioned state](techs/zustand/persist-only-safe-versioned-state.md)
+- [Rehydrate persisted stores after React hydration](techs/zustand/rehydrate-persisted-stores-after-hydration.md)
+- [Subscribe with narrow, stable selectors](techs/zustand/subscribe-with-selectors.md)
+- [Reset stores between tests and test actions directly](techs/zustand/test-actions-and-reset-stores.md)
+- [Update store state functionally and immutably](techs/zustand/use-functional-and-immutable-updates.md)
+- [Use Zustand only for shared client state](techs/zustand/use-zustand-only-for-shared-client-state.md)
+
+</details>
+
+<details>
+<summary><strong>Playwright</strong> · 2 rules</summary>
+
+- [Synchronize with auto-waiting actions and web-first assertions](techs/playwright/auto-waiting-actions-and-web-first-assertions.md)
+- [Scope locators by test id, then select controls by role and name](techs/playwright/domain-scope-and-user-facing-locators.md)
+
+</details>
+
+<details>
+<summary><strong>Go</strong> · 4 rules</summary>
+
+- [Comment struct fields whose meaning the type does not show](techs/go/comment-non-obvious-struct-fields.md)
+- [Separate package documentation from file headers](techs/go/comments-package-doc-vs-file-header.md)
+- [Add operation and identifier context to errors at boundaries](techs/go/errors-include-useful-diagnostic-data.md)
+- [Expose error identity only for contract errors](techs/go/errors-use-contract-errors-deliberately.md)
+
+</details>
+
+<details>
+<summary><strong>Goose</strong> · 1 rule</summary>
+
+- [Keep the SQL migration directory for migration files only](techs/goose/migrations-directory-contains-only-sql.md)
+
+</details>
+
+## Keep in mind
+
+- **These are opinions.** Style preferences and performance techniques are choices to evaluate for your project, not universal requirements. Some rules apply only in particular contexts, such as React rules for Next.js or specific React APIs; each rule's reading cue and exceptions say when.
+- **Rules guide agents; they don't enforce anything.** Ask your agent to read the relevant rules before implementing and to use them during review, alongside your tests, linters, and other checks.
+- **Pin a version.** Import a tag or a full commit so your project adopts rule changes deliberately. Released tags never move.
+
+## Contributing
+
+Pull requests are welcome. Describe the problem the change addresses, keep each rule focused on one expectation, and follow the [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/). Before opening a pull request, validate the library from its root:
 
 ```sh
 code-rules library check
 ```
 
-The command validates the library's format. Review the guidance itself as well: a rule should help someone make a better engineering decision.
+This checks the library's format, not the quality of its guidance, so review the rule itself too: it should help someone make a better engineering decision.
 
-Keep rule paths stable because projects use them to identify rules. Include source attribution and required notices when adapting others' work. Commit source rules here; Code Rules generates agent guidance in consuming projects.
+- **Keep rule paths stable.** Projects use them as rule IDs.
+- **Credit your sources.** Rules adapted from others' work need `attribution` metadata and any required notices in [NOTICE.md](NOTICE.md).
+- **Commit source rules only.** Code Rules generates agent guidance in each consuming project.
 
-Maintainers review changes through pull requests and publish version tags for approved releases. Existing release tags must not move. The first release follows review and an end-to-end import check.
+Maintainers review changes in pull requests and publish version tags for approved releases. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
 ## License and sources
 
-The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Some rules include material from mkosir, Vercel Labs, and Deckard Gerritsen, plus guidance informed by official documentation. Fabrica-specific rules are not included.
-
-Rules adapted from third-party sources carry attribution in their metadata. [NOTICE.md](NOTICE.md) preserves the required third-party notices.
+The library is [MIT licensed](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Some rules adapt material from [mkosir's TypeScript Style Guide](https://github.com/mkosir/typescript-style-guide), [Vercel Labs Agent Skills](https://github.com/vercel-labs/agent-skills), and [Deckard Gerritsen's TanStack Agent Skills](https://github.com/DeckardGer/tanstack-agent-skills), and others draw on official documentation. Adapted rules carry attribution in their metadata, and [NOTICE.md](NOTICE.md) preserves the required third-party notices. Fabrica-specific rules are not included.
