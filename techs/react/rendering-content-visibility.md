@@ -1,45 +1,51 @@
 ---
-title: "CSS content-visibility for Long Lists"
-whenToRead: "Before rendering long offscreen lists in a browser-based React UI with CSS content-visibility."
-impact: "HIGH"
-impactDescription: "Rendering offscreen content in a long list can delay initial display."
-tags: "react, performance, rendering, css, content-visibility, long-lists"
-
+title: "Skip off-screen rendering work in long lists"
+whenToRead: "Before writing, changing, reviewing, or diagnosing React UI that renders long scrollable lists or feeds whose items are mostly off screen."
+impact: "MEDIUM"
+impactDescription: "Laying out and painting every item of a long list slows initial render and scrolling."
+tags: "react, css, performance, lists"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-content-visibility.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule rendering-content-visibility: restructured to the rule template, added the virtualization alternative, and recalibrated impact."
 ---
 
-## CSS content-visibility for Long Lists
+## Skip off-screen rendering work in long lists
 
-Apply `content-visibility: auto` to defer off-screen rendering.
+For long lists whose items are mostly off screen, apply `content-visibility: auto` with a `contain-intrinsic-size` estimate to each item, so the browser skips layout and paint for items outside the viewport.
 
-**CSS:**
+### Implementation
+
+- Set `contain-intrinsic-size` close to an item's real height, so the scrollbar stays stable as items render.
+- When the list is so long that creating its DOM nodes is the cost, such as thousands of rows, use a virtualization library instead; `content-visibility` does not reduce React rendering or DOM size.
+- Measure rendering and scrolling before and after; short lists gain nothing.
+
+### Rationale
+
+Browsers lay out and paint every element in the document, including those far off screen.
+`content-visibility: auto` lets the browser skip that work for off-screen elements while keeping them in the DOM, so find-in-page and the accessibility tree still include them.
+
+### Examples
+
+**Incorrect (counterexample):**
+
+```css
+.message-item {
+  /* no containment: every item is laid out and painted */
+}
+```
+
+**Correct:**
 
 ```css
 .message-item {
   content-visibility: auto;
-  contain-intrinsic-size: 0 80px;
+  contain-intrinsic-size: auto 80px;
 }
 ```
 
-**Example:**
+### Validation
 
-```tsx
-function MessageList({ messages }: { messages: Message[] }) {
-  return (
-    <div className="overflow-y-auto h-screen">
-      {messages.map(msg => (
-        <div key={msg.id} className="message-item">
-          <Avatar user={msg.author} />
-          <div>{msg.content}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-```
+Record a performance profile of initial render and scrolling before and after the change.
+Check that the scrollbar does not jump noticeably while scrolling.
 
-For a long list, the browser can defer layout and paint for off-screen items. Measure the actual improvement and preserve accessible behavior.
-
-Source: [Vercel Agent Skills - react-best-practices/rendering-content-visibility.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-content-visibility.md). Adapted with attribution.
+A short list without `content-visibility` is not a violation.

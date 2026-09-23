@@ -1,57 +1,67 @@
 ---
-title: "Avoid Shared Module State for Request Data"
-whenToRead: "When planning, implementing, or reviewing request-scoped data flow in React server rendering."
+title: "Keep request data out of shared module state"
+whenToRead: "Before planning, writing, changing, or reviewing server-rendered React code, Server Components, or server functions that store data in module-level variables."
 impact: "HIGH"
-impactDescription: "prevents concurrency bugs and request data leaks"
-tags: "react, performance, server, rsc, ssr, concurrency, security, state"
-
+impactDescription: "Concurrent requests share module state, so request data stored there can leak one user's data into another user's response."
+tags: "react, server-components, ssr, concurrency, security"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-no-shared-module-state.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule server-no-shared-module-state: restructured to the rule template with a rationale and validation."
 ---
 
-## Avoid Shared Module State for Request Data
+## Keep request data out of shared module state
 
-For React Server Components and client components rendered during SSR, avoid using mutable module-level variables to share request-scoped data. Server renders can run concurrently in the same process. If one render writes to shared module state and another render reads it, you can get race conditions, cross-request contamination, and security bugs where one user's data appears in another user's response.
+Do not store request- or user-specific data in mutable module-level variables on the server.
+Pass it through props, function arguments, or a request-scoped API such as `React.cache`.
 
-Treat module scope on the server as process-wide shared memory, not request-local state.
+### Implementation
 
-**Incorrect (request data leaks across concurrent renders):**
+- Treat server module scope as memory shared by every request the process handles.
+- Pass request data, such as the current user, down the component tree as props, or read it through a request-scoped function.
+- Module-level values are fine when they are immutable and identical for every request, such as static configuration or assets loaded once.
+- A shared cache is fine when it is designed for cross-request reuse and its keys include everything that makes an entry request-specific.
+
+### Rationale
+
+A server can render several requests concurrently in one process, interleaving their asynchronous work.
+If one render writes a module-level variable and another render overwrites it before the first reads it, the first request renders the second request's data.
+The result is a race condition that can expose one user's data to another.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-let currentUser: User | null = null
+let currentUser: User | null = null;
 
 export default async function Page() {
-  currentUser = await auth()
-  return <Dashboard />
+  currentUser = await auth();
+  return <Dashboard />;
 }
 
 async function Dashboard() {
-  return <div>{currentUser?.name}</div>
+  return <div>{currentUser?.name}</div>;
 }
 ```
 
-If two requests overlap, request A can set `currentUser`, then request B overwrites it before request A finishes rendering `Dashboard`.
+If two requests overlap, request B can overwrite `currentUser` before request A renders `Dashboard`, so user A sees user B's name.
 
-**Correct (keep request data local to the render tree):**
+**Correct:**
 
 ```tsx
 export default async function Page() {
-  const user = await auth()
-  return <Dashboard user={user} />
+  const user = await auth();
+  return <Dashboard user={user} />;
 }
 
 function Dashboard({ user }: { user: User | null }) {
-  return <div>{user?.name}</div>
+  return <div>{user?.name}</div>;
 }
 ```
 
-Safe exceptions:
+### Validation
 
-- Immutable static assets or config loaded once at module scope
-- Shared caches intentionally designed for cross-request reuse and keyed correctly
-- Process-wide singletons that do not store request- or user-specific mutable data
+Search server modules for top-level `let` declarations and for module-level objects or collections that are mutated inside request handlers or components.
+Each one should hold only request-independent data or be a cache keyed by all request-specific inputs.
 
-Static, request-independent assets and configuration may be safely shared at module scope if their lifecycle and invalidation are appropriate.
-
-Source: [Vercel Agent Skills - react-best-practices/server-no-shared-module-state.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-no-shared-module-state.md). Adapted with attribution.
+Immutable configuration, assets loaded once, and correctly keyed caches are not violations.

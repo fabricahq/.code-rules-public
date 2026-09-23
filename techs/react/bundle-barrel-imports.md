@@ -1,67 +1,69 @@
 ---
-title: "Avoid Barrel File Imports"
-whenToRead: "Before importing from large package barrel files in a React app; account for the bundler and Next.js import optimizations."
-impact: "CRITICAL"
-impactDescription: "Large barrel imports can increase module loading and build work when the bundler cannot eliminate unused exports."
-tags: "react, performance, bundle, imports, tree-shaking, barrel-files"
-
+title: "Avoid loading large barrel files"
+whenToRead: "Before planning, writing, changing, or reviewing imports from large packages that re-export many modules through one entry file, such as icon and component libraries, or when diagnosing slow development builds or cold starts."
+impact: "MEDIUM"
+impactDescription: "Importing from a large barrel file can load thousands of unused modules when the toolchain cannot eliminate them, slowing builds and cold starts."
+tags: "react, bundling, imports, nextjs"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/bundle-barrel-imports.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule bundle-barrel-imports: restructured to the rule template, recalibrated impact, and labeled measurements as reported by the source."
 ---
 
-## Avoid Barrel File Imports
+## Avoid loading large barrel files
 
-Import directly from source files instead of barrel files to avoid loading thousands of unused modules. **Barrel files** are entry points that re-export multiple modules (e.g., `index.js` that does `export * from './module'`).
+When a package's entry file re-exports many modules, make sure only the modules you use are loaded.
+Use the framework's import optimization when available, or import from the specific module path.
 
-Popular icon and component libraries can have **up to 10,000 re-exports** in their entry file. Large barrels can increase module loading time when the toolchain cannot eliminate unused exports. Measure the actual cost in the project before changing imports.
+### Implementation
 
-**Why tree-shaking doesn't help:** When a library is marked as external (not bundled), the bundler can't optimize it. If you bundle it to enable tree-shaking, builds become substantially slower analyzing the entire module graph.
+- In Next.js, list the package in `optimizePackageImports`, which rewrites barrel imports to direct imports at build time and keeps the ordinary import syntax.
+- Without such an optimization, import from the specific module path, such as `@mui/material/Button`.
+  Check that the package publishes types for those paths; some packages do not, which produces implicit `any` under strict settings.
+- Measure development startup, build time, or cold start before and after the change.
+  The benefit depends on the package's structure, the bundler, and whether the package is bundled or treated as external.
+- Your own small internal barrels are rarely the problem; focus on third-party packages with hundreds or thousands of exports.
 
-**Incorrect (imports entire library):**
+### Rationale
+
+A barrel file re-exports every module in a package.
+When the toolchain cannot tree-shake it, such as a package loaded unbundled in development or on the server, importing one name evaluates every re-exported module.
+Vercel reported that importing a few icons from one popular icon library loaded about 1,500 modules and added seconds to development startup.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-import { Check, X, Menu } from 'lucide-react'
-// Loads 1,583 modules, takes ~2.8s extra in dev
-// Potentially loads unused exports on a cold start
-
-import { Button, TextField } from '@mui/material'
-// Loads 2,225 modules, takes ~4.2s extra in dev
+import { Button, TextField } from '@mui/material';
 ```
 
-**Correct - Next.js 13.5+ (recommended):**
+Without an import optimization, this can load the whole component library.
+
+**Correct (Next.js):**
 
 ```js
-// next.config.js - automatically optimizes barrel imports at build time
+// next.config.js
 module.exports = {
   experimental: {
-    optimizePackageImports: ['lucide-react', '@mui/material']
-  }
-}
+    optimizePackageImports: ['@mui/material'],
+  },
+};
 ```
 
 ```tsx
-// Keep the standard imports - Next.js transforms them to direct imports
-import { Check, X, Menu } from 'lucide-react'
-// Full TypeScript support, no manual path wrangling
+import { Button, TextField } from '@mui/material';
 ```
 
-This is the recommended approach because it preserves TypeScript type safety and editor autocompletion while still eliminating the barrel import cost.
-
-**Correct - Direct imports (non-Next.js projects):**
+**Correct (without a framework optimization):**
 
 ```tsx
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-// Loads only what you use
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 ```
 
-> **TypeScript warning:** Some libraries (notably `lucide-react`) don't ship `.d.ts` files for their deep import paths. Importing from `lucide-react/dist/esm/icons/check` resolves to an implicit `any` type, causing errors under `strict` or `noImplicitAny`. Prefer `optimizePackageImports` when available, or verify the library exports types for its subpaths before using direct imports.
+### Validation
 
-The benefit depends on package structure, bundler configuration, and deployment mode. Measure build and runtime behavior in the consuming project.
+Measure module count or startup time before and after the change, and keep it only if it helps.
+Check that direct import paths type-check under the project's settings.
 
-Libraries commonly affected: `lucide-react`, `@mui/material`, `@mui/icons-material`, `@tabler/icons-react`, `react-icons`, `@headlessui/react`, `@radix-ui/react-*`, `lodash`, `ramda`, `date-fns`, `rxjs`, `react-use`.
-
-Reference: [How we optimized package imports in Next.js](https://vercel.com/blog/how-we-optimized-package-imports-in-next-js)
-
-Source: [Vercel Agent Skills - react-best-practices/bundle-barrel-imports.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/bundle-barrel-imports.md). Adapted with attribution.
+A barrel import from a package the toolchain already optimizes is not a violation.

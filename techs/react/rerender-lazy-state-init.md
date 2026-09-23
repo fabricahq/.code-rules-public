@@ -1,65 +1,47 @@
 ---
-title: "Use Lazy State Initialization"
-whenToRead: "Before computing an expensive initial value for React useState."
-impact: "MEDIUM"
-impactDescription: "Eager initializers perform unused work on every render after the first."
-tags: "react, performance, hooks, useState, initialization"
-
+title: "Initialize expensive state lazily"
+whenToRead: "Before writing, changing, or reviewing a React useState or useReducer call whose initial value is computed, such as parsing stored data or building an index."
+impact: "LOW-MEDIUM"
+impactDescription: "An initial value expression runs on every render even though React uses it only once."
+tags: "react, state, performance"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-lazy-state-init.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule rerender-lazy-state-init: restructured to the rule template with a rationale and validation."
 ---
 
-## Use Lazy State Initialization
+## Initialize expensive state lazily
 
-Pass a function to `useState` for expensive initial values. Without the function form, the initializer runs on every render even though the value is only used once.
+When the initial state comes from a computation, pass a function to `useState`, such as `useState(() => buildIndex(items))`, instead of the computed value.
 
-**Incorrect (runs on every render):**
+### Implementation
 
-```tsx
-function FilteredList({ items }: { items: Item[] }) {
-  // buildSearchIndex() runs on EVERY render, even after initialization
-  const [searchIndex, setSearchIndex] = useState(buildSearchIndex(items))
-  const [query, setQuery] = useState('')
+- Use the function form for parsing, building data structures, and reading from storage or the DOM.
+- A literal or an already available value, such as `useState(0)` or `useState(props.value)`, does not need it.
+- For `useReducer`, pass an `init` function as the third argument.
+- Reading browser storage in an initializer still runs during server rendering; guard it or read it on the client.
 
-  // When query changes, buildSearchIndex runs again unnecessarily
-  return <SearchResults index={searchIndex} query={query} />
-}
+### Rationale
 
-function UserProfile() {
-  // JSON.parse runs on every render
-  const [settings, setSettings] = useState(
-    JSON.parse(localStorage.getItem('settings') || '{}')
-  )
+JavaScript evaluates a function call's arguments before the call, so `useState(buildIndex(items))` runs `buildIndex` on every render.
+React uses the argument only on the first render, so every later computation is wasted.
+An initializer function runs only on the first render.
 
-  return <SettingsForm settings={settings} onChange={setSettings} />
-}
-```
+### Examples
 
-**Correct (runs only once):**
+**Incorrect (counterexample):**
 
 ```tsx
-function FilteredList({ items }: { items: Item[] }) {
-  // buildSearchIndex() runs ONLY on initial render
-  const [searchIndex, setSearchIndex] = useState(() => buildSearchIndex(items))
-  const [query, setQuery] = useState('')
-
-  return <SearchResults index={searchIndex} query={query} />
-}
-
-function UserProfile() {
-  // JSON.parse runs only on initial render
-  const [settings, setSettings] = useState(() => {
-    const stored = localStorage.getItem('settings')
-    return stored ? JSON.parse(stored) : {}
-  })
-
-  return <SettingsForm settings={settings} onChange={setSettings} />
-}
+const [index, setIndex] = useState(buildSearchIndex(items));
 ```
 
-Use lazy initialization when computing initial values from localStorage/sessionStorage, building data structures (indexes, maps), reading from the DOM, or performing heavy transformations.
+**Correct:**
 
-For simple primitives (`useState(0)`), direct references (`useState(props.value)`), or cheap literals (`useState({})`), the function form is unnecessary.
+```tsx
+const [index, setIndex] = useState(() => buildSearchIndex(items));
+```
 
-Source: [Vercel Agent Skills - react-best-practices/rerender-lazy-state-init.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-lazy-state-init.md). Adapted with attribution.
+### Validation
+
+Check `useState` and `useReducer` calls whose initial value is a function call or other non-trivial expression.
+
+A cheap literal or variable passed directly is not a violation.

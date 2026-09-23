@@ -1,106 +1,72 @@
 ---
-title: "Strategic Suspense Boundaries"
-whenToRead: "When planning, implementing, or reviewing data loading in React server components and Suspense boundaries."
-impact: "HIGH"
-impactDescription: "Awaiting data before returning the surrounding UI delays what users can see."
-tags: "react, performance, async, suspense, streaming, layout-shift"
-
+title: "Stream slow data behind Suspense boundaries"
+whenToRead: "Before planning, writing, changing, or reviewing data loading in React Server Components or streaming server rendering, such as a page that awaits data before rendering its layout."
+impact: "MEDIUM-HIGH"
+impactDescription: "Awaiting data at the top of a page delays everything, including layout that does not need the data."
+tags: "react, suspense, streaming, server-components"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-suspense-boundaries.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule async-suspense-boundaries: restructured to the rule template with a rationale and validation."
 ---
 
-## Strategic Suspense Boundaries
+## Stream slow data behind Suspense boundaries
 
-Instead of awaiting data in async components before returning JSX, use Suspense boundaries to show the wrapper UI faster while data loads.
+Await data in the component that needs it, and wrap that component in a `Suspense` boundary with a fallback, so the rest of the page can render and stream first.
 
-**Incorrect (wrapper blocked by data fetching):**
+### Implementation
+
+- Move each slow data read into the smallest component that uses it.
+- Wrap that component in `<Suspense fallback={...}>` with a fallback that matches the final content's size, to limit layout shift.
+- When several components need the same data, start the request once in the parent without awaiting it, and pass the promise to children that read it with `use`.
+- Keep data at the top when it decides the page's structure, such as whether to redirect or which layout to show.
+- Keep data out of a boundary when it is small and fast enough that a fallback would only flash.
+
+### Rationale
+
+An `await` at the top of a server component blocks everything that component returns.
+With a boundary around the part that needs the data, the server sends the rest of the page immediately and streams the slow part when it resolves.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
 async function Page() {
-  const data = await fetchData() // Blocks entire page
+  const data = await fetchData();
 
   return (
-    <div>
-      <div>Sidebar</div>
-      <div>Header</div>
-      <div>
-        <DataDisplay data={data} />
-      </div>
-      <div>Footer</div>
-    </div>
-  )
+    <Layout>
+      <Sidebar />
+      <DataDisplay data={data} />
+    </Layout>
+  );
 }
 ```
 
-The entire layout waits for data even though only the middle section needs it.
+The layout and sidebar wait for `fetchData` even though they do not use it.
 
-**Correct (wrapper shows immediately, data streams in):**
+**Correct:**
 
 ```tsx
 function Page() {
   return (
-    <div>
-      <div>Sidebar</div>
-      <div>Header</div>
-      <div>
-        <Suspense fallback={<Skeleton />}>
-          <DataDisplay />
-        </Suspense>
-      </div>
-      <div>Footer</div>
-    </div>
-  )
+    <Layout>
+      <Sidebar />
+      <Suspense fallback={<DataSkeleton />}>
+        <DataDisplay />
+      </Suspense>
+    </Layout>
+  );
 }
 
 async function DataDisplay() {
-  const data = await fetchData() // Only blocks this component
-  return <div>{data.content}</div>
+  const data = await fetchData();
+  return <div>{data.content}</div>;
 }
 ```
 
-Sidebar, Header, and Footer render immediately. Only DataDisplay waits for data.
+### Validation
 
-**Alternative (share promise across components):**
+Load the page with a slowed data source and check that the layout appears before the slow section.
 
-```tsx
-function Page() {
-  // Start fetch immediately, but don't await
-  const dataPromise = fetchData()
-
-  return (
-    <div>
-      <div>Sidebar</div>
-      <div>Header</div>
-      <Suspense fallback={<Skeleton />}>
-        <DataDisplay dataPromise={dataPromise} />
-        <DataSummary dataPromise={dataPromise} />
-      </Suspense>
-      <div>Footer</div>
-    </div>
-  )
-}
-
-function DataDisplay({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise) // Unwraps the promise
-  return <div>{data.content}</div>
-}
-
-function DataSummary({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise) // Reuses the same promise
-  return <div>{data.summary}</div>
-}
-```
-
-Both components share the same promise, so only one fetch occurs. Layout renders immediately while both components wait together.
-
-**When NOT to use this pattern:**
-
-- Critical data needed for layout decisions (affects positioning)
-- SEO-critical content above the fold
-- Small, fast queries where suspense overhead isn't worth it
-- When you want to avoid layout shift (loading -> content jump)
-
-**Trade-off:** Faster initial paint vs potential layout shift. Choose based on your UX priorities.
-
-Source: [Vercel Agent Skills - react-best-practices/async-suspense-boundaries.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/async-suspense-boundaries.md). Adapted with attribution.
+Awaiting data at the top of a page is not a violation when that data decides the page's structure.

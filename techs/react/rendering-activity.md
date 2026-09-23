@@ -1,33 +1,52 @@
 ---
-title: "Use Activity Component for Show/Hide"
-whenToRead: "Before toggling an expensive React component when preserving hidden state matters; check support for Activity in the installed React version."
+title: "Use Activity to hide UI that should keep its state"
+whenToRead: "Before writing, changing, or reviewing React UI that is shown and hidden repeatedly and should keep its state while hidden, such as tabs, drawers, or menus, in React 19.2 or newer."
 impact: "MEDIUM"
-impactDescription: "Hidden content can retain component state when toggled back into view."
-tags: "react, performance, rendering, activity, visibility, state-preservation"
-
+impactDescription: "Unmounting hidden UI discards its state, and hiding it with CSS alone keeps its Effects running."
+tags: "react, activity, state"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-activity.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule rendering-activity: restructured to the rule template with Effect behavior and version requirements."
 ---
 
-## Use Activity Component for Show/Hide
+## Use Activity to hide UI that should keep its state
 
-When the installed React version supports `<Activity>`, use it for content that frequently toggles visibility and should retain state while hidden. Hidden Activity content may be removed from layout while its component state is preserved; verify effects and performance in the actual app.
+When UI toggles between visible and hidden and should keep its state while hidden, wrap it in `<Activity mode={visible ? 'visible' : 'hidden'}>` instead of unmounting it.
 
-**Usage:**
+### Implementation
+
+- Use `Activity` for content that users return to, such as tabs, drawers, or a menu with expensive contents.
+- Expect hidden content's Effects to be cleaned up and set up again when it becomes visible, so subscriptions stop while hidden.
+- Keep conditional rendering for UI that should start fresh each time it appears.
+- `Activity` requires React 19.2 or newer.
+
+### Rationale
+
+Conditional rendering unmounts hidden UI, which discards its state, such as form input and scroll position.
+Hiding it with CSS keeps its state but also keeps its Effects running.
+`Activity` hides the content with `display: none`, keeps its state, and pauses its Effects.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-import { Activity } from 'react'
-
-function Dropdown({ isOpen }: Props) {
-  return (
-    <Activity mode={isOpen ? 'visible' : 'hidden'}>
-      <ExpensiveMenu />
-    </Activity>
-  )
-}
+{activeTab === 'settings' && <SettingsForm />}
 ```
 
-This preserves component state across visibility changes. Measure render cost before treating it as a performance optimization.
+Switching tabs discards anything the user typed in the settings form.
 
-Source: [Vercel Agent Skills - react-best-practices/rendering-activity.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-activity.md). Adapted with attribution.
+**Correct:**
+
+```tsx
+<Activity mode={activeTab === 'settings' ? 'visible' : 'hidden'}>
+  <SettingsForm />
+</Activity>
+```
+
+### Validation
+
+Enter data in the content, hide it, and show it again; the data should remain.
+Check that subscriptions in hidden content stop while it is hidden.
+
+Unmounting content that should reset when it reappears is not a violation.

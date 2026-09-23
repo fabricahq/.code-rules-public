@@ -1,49 +1,64 @@
 ---
-title: "Initialize App Once, Not Per Mount"
-whenToRead: "When planning, implementing, or reviewing app-wide initialization in a React application."
+title: "Run app-wide initialization once per app load"
+whenToRead: "Before planning, writing, changing, or reviewing React code that performs app-wide setup, such as reading persisted settings, checking an auth token, or initializing an SDK."
 impact: "LOW-MEDIUM"
-impactDescription: "avoids duplicate init in development"
-tags: "react, performance, initialization, useEffect, app-startup, side-effects"
-
+impactDescription: "Initialization placed in a component Effect runs again on remount and twice in development, repeating setup that must happen once."
+tags: "react, effects, initialization"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/advanced-init-once.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule advanced-init-once: restructured to the rule template with a rationale and validation."
 ---
 
-## Initialize App Once, Not Per Mount
+## Run app-wide initialization once per app load
 
-Do not put app-wide initialization that must run once per app load inside `useEffect([])` of a component. Components can remount and effects will re-run. Use a module-level guard or top-level init in the entry module instead.
+Run setup that must happen once per app load in the entry module or behind a module-level guard, not in a component's mount Effect.
 
-**Incorrect (runs twice in dev, re-runs on remount):**
+### Implementation
+
+- Prefer calling app-wide setup in the application's entry module, before rendering, when it does not need React.
+- When it must start from a component, guard it with a module-level flag so a remount does not repeat it.
+- Guard only browser-side setup this way; on a server, module state is shared across requests.
+- Setup that belongs to a component instance, such as subscribing while a widget is displayed, belongs in an Effect with cleanup instead.
+
+### Rationale
+
+Components can unmount and mount again, and Strict Mode runs mount Effects twice in development to surface missing cleanup.
+Setup that must happen once per load, such as initializing an analytics SDK, then runs more than once.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-function Comp() {
+function App() {
   useEffect(() => {
-    loadFromStorage()
-    checkAuthToken()
-  }, [])
-
+    loadSettingsFromStorage();
+    checkAuthToken();
+  }, []);
   // ...
 }
 ```
 
-**Correct (once per app load):**
+The setup runs twice in development and again whenever `App` remounts.
+
+**Correct:**
 
 ```tsx
-let didInit = false
+let didInit = false;
 
-function Comp() {
+function App() {
   useEffect(() => {
-    if (didInit) return
-    didInit = true
-    loadFromStorage()
-    checkAuthToken()
-  }, [])
-
+    if (didInit) return;
+    didInit = true;
+    loadSettingsFromStorage();
+    checkAuthToken();
+  }, []);
   // ...
 }
 ```
 
-Reference: [Initializing the application](https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application)
+### Validation
 
-Source: [Vercel Agent Skills - react-best-practices/advanced-init-once.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/advanced-init-once.md). Adapted with attribution.
+Run the app in Strict Mode during development and check that app-wide setup runs once.
+
+An Effect that sets up and cleans up something tied to one component instance is not a violation.

@@ -1,36 +1,56 @@
 ---
 title: "Follow the Rules of Hooks"
-whenToRead: "Before writing or reviewing React components or custom Hooks that call Hooks."
-impact: "CRITICAL"
-impactDescription: "keeps Hook state associated with a stable call order across renders"
-tags: "react, hooks, rules-of-hooks, lint, purity"
-
+whenToRead: "Before planning, writing, changing, or reviewing React components or custom Hooks that call Hooks, or when a Hooks lint warning appears."
+impact: "HIGH"
+impactDescription: "Calling Hooks conditionally or out of order attaches state to the wrong Hook and produces bugs that are hard to trace."
+tags: "react, hooks"
 attribution:
   - url: https://react.dev/reference/rules/rules-of-hooks
-    description: "Official React documentation paraphrased in the source rule."
+    description: "Official React documentation paraphrased in the source rule; restructured to the rule template with a rationale, a loop example, and validation."
 ---
 
 ## Follow the Rules of Hooks
 
-Call stateful React Hooks in a consistent order at the top level of a function component or custom Hook, before any early return. Calling them in a loop, branch, nested function, event handler, class, or `try` / `catch` can break state association across renders. React 19's `use` API is an exception: it can read a resource conditionally or in a loop, but it must still be called while rendering a component or Hook and cannot be wrapped in `try` / `catch`.
+Call Hooks only at the top level of a function component or custom Hook, in the same order on every render, and before any early return.
 
-**Incorrect:**
+### Implementation
+
+- Do not call Hooks inside conditions, loops, nested functions, event handlers, class components, or `try` / `catch` blocks.
+- Move a condition inside the Hook call, or into the logic that uses the Hook's result, instead of wrapping the Hook call in the condition.
+- When a component needs a varying number of stateful items, render a child component per item, and let each child call its own Hooks.
+- The `use` API is an exception: it can be called conditionally or in a loop, but only while rendering a component or Hook, and not inside `try` / `catch`.
+- Enable the React Hooks lint rules.
+  When they report a call-order or dependency problem, change the structure instead of suppressing the warning, unless a comment documents why the suppression is safe.
+
+### Rationale
+
+React identifies each Hook's state by the order of Hook calls during render.
+If a call is skipped or repeated on one render, every later Hook reads the state that belonged to a different call.
+The resulting bugs appear far from the conditional call, often only for some props.
+
+### Examples
+
+#### Application: A conditional Hook
+
+**Incorrect (counterexample):**
 
 ```tsx
 function Profile({ enabled }: { enabled: boolean }) {
   if (enabled) {
-    const [name, setName] = useState("");
+    const [name, setName] = useState('');
   }
 
   return null;
 }
 ```
 
+The Hook runs on some renders and not others, so React loses track of which state belongs to which call.
+
 **Correct:**
 
 ```tsx
 function Profile({ enabled }: { enabled: boolean }) {
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
 
   if (!enabled) {
     return null;
@@ -40,8 +60,37 @@ function Profile({ enabled }: { enabled: boolean }) {
 }
 ```
 
-Prefer the React hooks lint rules over local judgment when changing Hook-heavy code. If the lint rule reports a dependency or call-order problem, change the structure instead of suppressing it unless there is a documented reason.
+#### Application: A Hook per list item
 
-References: [React Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks), [use API](https://react.dev/reference/react/use), [eslint-plugin-react-hooks](https://react.dev/reference/eslint-plugin-react-hooks).
+**Incorrect (counterexample):**
 
-Source: [React docs - Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks). Paraphrased from official React documentation.
+```tsx
+function Checklist({ items }: { items: ReadonlyArray<Item> }) {
+  const checked = items.map(() => useState(false));
+  // ...
+}
+```
+
+The number of Hook calls changes whenever the list length changes.
+
+**Correct:**
+
+```tsx
+function Checklist({ items }: { items: ReadonlyArray<Item> }) {
+  return items.map((item) => <ChecklistRow key={item.id} item={item} />);
+}
+
+function ChecklistRow({ item }: { item: Item }) {
+  const [checked, setChecked] = useState(false);
+  // ...
+}
+```
+
+Each row owns a fixed set of Hook calls.
+
+### Validation
+
+Run the React Hooks lint rules and check that they report no call-order violations.
+Review any lint suppression for a comment that explains why it is safe.
+
+A conditional or looped call to `use` is not a violation.

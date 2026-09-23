@@ -1,47 +1,52 @@
 ---
-title: "Use Explicit Conditional Rendering"
-whenToRead: "Before using logical AND to render React content when the condition may be numeric or another renderable falsy value."
-impact: "LOW"
-impactDescription: "prevents rendering 0 or NaN"
-tags: "react, performance, rendering, conditional, jsx, falsy-values"
-
+title: "Use a boolean condition for conditional rendering"
+whenToRead: "Before writing, changing, or reviewing JSX that renders content with `&&` based on a number, string, or other value that is not already a boolean."
+impact: "LOW-MEDIUM"
+impactDescription: "A falsy number such as 0 renders as visible text instead of nothing."
+tags: "react, jsx, rendering"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-conditional-render.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule rendering-conditional-render: restructured to the rule template with a rationale and validation."
 ---
 
-## Use Explicit Conditional Rendering
+## Use a boolean condition for conditional rendering
 
-Use explicit ternary operators (`? :`) instead of `&&` for conditional rendering when the condition can be `0`, `NaN`, or other falsy values that render.
+When the left side of `&&` in JSX is not a boolean, turn it into one, such as `count > 0`, or use a ternary that returns `null`.
 
-**Incorrect (renders "0" when count is 0):**
+### Implementation
 
-```tsx
-function Badge({ count }: { count: number }) {
-  return (
-    <div>
-      {count && <span className="badge">{count}</span>}
-    </div>
-  )
-}
+- Compare numbers explicitly, such as `items.length > 0` instead of `items.length`.
+- Convert other values with an explicit check, such as `name !== ''`, or with `Boolean(value)` when truthiness is the intended test.
+- `&&` with a value that is already a boolean, such as `isOpen && <Menu />`, is fine.
 
-// When count = 0, renders: <div>0</div>
-// When count = 5, renders: <div><span class="badge">5</span></div>
-```
+### Rationale
 
-**Correct (renders nothing when count is 0):**
+`a && b` evaluates to `a` when `a` is falsy.
+React renders `false`, `null`, and `undefined` as nothing, but it renders `0` and `NaN` as text, so a count of zero shows a stray "0".
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
 function Badge({ count }: { count: number }) {
-  return (
-    <div>
-      {count > 0 ? <span className="badge">{count}</span> : null}
-    </div>
-  )
+  return <div>{count && <span className="badge">{count}</span>}</div>;
 }
-
-// When count = 0, renders: <div></div>
-// When count = 5, renders: <div><span class="badge">5</span></div>
 ```
 
-Source: [Vercel Agent Skills - react-best-practices/rendering-conditional-render.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-conditional-render.md). Adapted with attribution.
+When `count` is `0`, the component renders `<div>0</div>`.
+
+**Correct:**
+
+```tsx
+function Badge({ count }: { count: number }) {
+  return <div>{count > 0 ? <span className="badge">{count}</span> : null}</div>;
+}
+```
+
+### Validation
+
+Check each `&&` in JSX whose left side has a `number`, `string`, or union type that includes them.
+A lint rule that flags non-boolean left operands in JSX can automate this.
+
+`&&` with a boolean left side is not a violation.

@@ -1,90 +1,71 @@
 ---
-title: "Use React DOM Resource Hints"
-whenToRead: "Before loading critical resources through React DOM preload, preconnect, or related resource hint APIs."
-impact: "HIGH"
-impactDescription: "Late resource discovery can delay loading of critical assets."
-tags: "react, performance, rendering, preload, preconnect, prefetch, resource-hints"
-
+title: "Hint critical resources with React DOM resource APIs"
+whenToRead: "Before planning, writing, changing, or reviewing how a React app loads fonts, stylesheets, scripts, or connections to other origins that a page needs early."
+impact: "MEDIUM"
+impactDescription: "Resources discovered late, after other downloads or code run, delay rendering."
+tags: "react, react-dom, preload, performance"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-resource-hints.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule rendering-resource-hints: restructured to the rule template, corrected the preinit stylesheet example to include the required precedence, and recalibrated impact."
 ---
 
-## Use React DOM Resource Hints
+## Hint critical resources with React DOM resource APIs
 
-React DOM provides APIs to hint the browser about resources it will need. These are especially useful in server components to start loading resources before the client even receives the HTML.
+When a page will need a resource that the browser would discover late, call the matching React DOM resource API during render so the browser starts fetching it early.
 
-- **`prefetchDNS(href)`**: Resolve DNS for a domain you expect to connect to
-- **`preconnect(href)`**: Establish connection (DNS + TCP + TLS) to a server
-- **`preload(href, options)`**: Fetch a resource (stylesheet, font, script, image) you'll use soon
-- **`preloadModule(href)`**: Fetch an ES module you'll use soon
-- **`preinit(href, options)`**: Fetch and evaluate a stylesheet or script
-- **`preinitModule(href)`**: Fetch and evaluate an ES module
+### Implementation
 
-**Example (preconnect to third-party APIs):**
+- `prefetchDNS(href)` resolves a domain you may connect to later.
+- `preconnect(href)` opens a connection to an origin you will fetch from soon.
+- `preload(href, { as })` fetches a font, stylesheet, script, or image that the current page needs.
+- `preloadModule(href)` fetches an ES module that will be imported soon.
+- `preinit(href, { as, precedence })` fetches and applies a stylesheet or script; stylesheets require `precedence`.
+- Call these in Server Components or during render so the hints appear in the initial HTML; React deduplicates repeated calls.
+- Hint only resources the page will use soon; unnecessary preloads compete with critical downloads.
+
+### Rationale
+
+A browser finds a resource only when it parses the reference, such as a font referenced inside a stylesheet or a script imported by another script.
+A hint in the initial HTML lets the download start in parallel instead of in sequence.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-import { preconnect, prefetchDNS } from 'react-dom'
-
-export default function App() {
-  prefetchDNS('https://analytics.example.com')
-  preconnect('https://api.example.com')
-
-  return <main>{/* content */}</main>
+export default function RootLayout({ children }: { children: ReactNode }) {
+  preinit('/styles/critical.css', { as: 'style' });
+  return (
+    <html>
+      <body>{children}</body>
+    </html>
+  );
 }
 ```
 
-**Example (preload critical fonts and styles):**
+React documents `precedence` as required for stylesheets passed to `preinit`, so this call omits a required option.
+
+**Correct:**
 
 ```tsx
-import { preload, preinit } from 'react-dom'
+import { preconnect, preinit, preload } from 'react-dom';
 
-export default function RootLayout({ children }) {
-  // Preload font file
-  preload('/fonts/inter.woff2', { as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' })
-
-  // Fetch and apply critical stylesheet immediately
-  preinit('/styles/critical.css', { as: 'style' })
+export default function RootLayout({ children }: { children: ReactNode }) {
+  preconnect('https://api.example.com');
+  preload('/fonts/inter.woff2', { as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' });
+  preinit('/styles/critical.css', { as: 'style', precedence: 'high' });
 
   return (
     <html>
       <body>{children}</body>
     </html>
-  )
+  );
 }
 ```
 
-**Example (preload modules for code-split routes):**
+### Validation
 
-```tsx
-import { preloadModule, preinitModule } from 'react-dom'
+Inspect the initial HTML for the expected `<link>` hints, and check in the network panel that the resources start downloading early.
+Check the console for warnings about preloaded resources that went unused.
 
-function Navigation() {
-  const preloadDashboard = () => {
-    preloadModule('/dashboard.js', { as: 'script' })
-  }
-
-  return (
-    <nav>
-      <a href="/dashboard" onMouseEnter={preloadDashboard}>
-        Dashboard
-      </a>
-    </nav>
-  )
-}
-```
-
-**When to use each:**
-
-| API | Use case |
-|-----|----------|
-| `prefetchDNS` | Third-party domains you'll connect to later |
-| `preconnect` | APIs or CDNs you'll fetch from immediately |
-| `preload` | Critical resources needed for current page |
-| `preloadModule` | JS modules for likely next navigation |
-| `preinit` | Stylesheets/scripts that must execute early |
-| `preinitModule` | ES modules that must execute early |
-
-Reference: [React DOM Resource Preloading APIs](https://react.dev/reference/react-dom#resource-preloading-apis)
-
-Source: [Vercel Agent Skills - react-best-practices/rendering-resource-hints.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rendering-resource-hints.md). Adapted with attribution.
+A resource that the browser already discovers early does not need a hint.

@@ -1,87 +1,71 @@
 ---
-title: "Don't Define Components Inside Components"
-whenToRead: "When implementing or reviewing components created during another React component's render."
+title: "Do not define components inside components"
+whenToRead: "Before planning, writing, changing, reviewing, or diagnosing React components that declare other components during render, or when inputs lose focus or state resets on every render."
 impact: "HIGH"
-impactDescription: "prevents remount on every render"
-tags: "react, performance, rerender, components, remount"
-
+impactDescription: "A component defined during render is a new type each time, so React remounts it and loses its state, focus, and DOM on every parent render."
+tags: "react, components, remount, state"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-no-inline-components.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule rerender-no-inline-components: restructured to the rule template with a rationale, exceptions, and validation."
 ---
 
-## Don't Define Components Inside Components
+## Do not define components inside components
 
-Defining a component inside another component creates a new component type on every render. React sees a different component each time and fully remounts it, destroying all state and DOM.
+Declare components at module level and pass them the data they need as props.
+Do not create a component function or class inside another component's render.
 
-A common reason developers do this is to access parent variables without passing props. Always pass props instead.
+### Implementation
 
-**Incorrect (remounts on every render):**
+- Move nested component definitions to module level, and pass the parent values they read as props.
+- When a nested component exists only to reuse some JSX, call a plain function that returns JSX, or inline the JSX, instead of rendering it as a component.
+- Creating an element such as `<Avatar />` inside render is fine; the problem is creating the component type itself inside render.
+
+### Rationale
+
+React decides whether to keep a component's state by comparing its type with the previous render.
+A component defined inside another is a new function on every render, so React treats it as a different type, unmounts the old instance, and mounts a new one.
+The child loses its state, focus, and DOM nodes, and its Effects run cleanup and setup again.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-function UserProfile({ user, theme }) {
-  // Defined inside to access `theme` - BAD
+function UserProfile({ user, theme }: { user: User; theme: Theme }) {
   const Avatar = () => (
-    <img
-      src={user.avatarUrl}
-      className={theme === 'dark' ? 'avatar-dark' : 'avatar-light'}
-    />
-  )
-
-  // Defined inside to access `user` - BAD
-  const Stats = () => (
-    <div>
-      <span>{user.followers} followers</span>
-      <span>{user.posts} posts</span>
-    </div>
-  )
+    <img src={user.avatarUrl} className={theme === 'dark' ? 'avatar-dark' : 'avatar-light'} />
+  );
 
   return (
     <div>
       <Avatar />
-      <Stats />
     </div>
-  )
+  );
 }
 ```
 
-Every time `UserProfile` renders, `Avatar` and `Stats` are new component types. React unmounts the old instances and mounts new ones, losing any internal state, running effects again, and recreating DOM nodes.
+`Avatar` is recreated each time `UserProfile` renders, so it remounts every time.
+If it held an input, the input would lose focus on every keystroke.
 
-**Correct (pass props instead):**
+**Correct:**
 
 ```tsx
-function Avatar({ src, theme }: { src: string; theme: string }) {
-  return (
-    <img
-      src={src}
-      className={theme === 'dark' ? 'avatar-dark' : 'avatar-light'}
-    />
-  )
+function Avatar({ src, theme }: { src: string; theme: Theme }) {
+  return <img src={src} className={theme === 'dark' ? 'avatar-dark' : 'avatar-light'} />;
 }
 
-function Stats({ followers, posts }: { followers: number; posts: number }) {
-  return (
-    <div>
-      <span>{followers} followers</span>
-      <span>{posts} posts</span>
-    </div>
-  )
-}
-
-function UserProfile({ user, theme }) {
+function UserProfile({ user, theme }: { user: User; theme: Theme }) {
   return (
     <div>
       <Avatar src={user.avatarUrl} theme={theme} />
-      <Stats followers={user.followers} posts={user.posts} />
     </div>
-  )
+  );
 }
 ```
 
-**Symptoms of this bug:**
-- Input fields lose focus on every keystroke
-- Animations restart unexpectedly
-- `useEffect` cleanup/setup runs on every parent render
-- Scroll position resets inside the component
+### Validation
 
-Source: [Vercel Agent Skills - react-best-practices/rerender-no-inline-components.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/rerender-no-inline-components.md). Adapted with attribution.
+Search component bodies for function or arrow declarations that start with a capital letter and are rendered as JSX elements.
+Symptoms that point to this bug include inputs losing focus on each keystroke, animations restarting, and Effects re-running on every parent render.
+
+A lowercase helper that returns JSX and is called as a function, not rendered as `<Helper />`, is not a violation.

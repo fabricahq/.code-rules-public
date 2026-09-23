@@ -1,83 +1,58 @@
 ---
-title: "Per-Request Deduplication with React.cache()"
-whenToRead: "Before deduplicating server-side operations within a React render request using React.cache()."
+title: "Deduplicate per-request server work with cache"
+whenToRead: "Before planning, writing, changing, or reviewing React Server Component code that calls the same database query, authentication check, or other non-fetch operation from several components in one request."
 impact: "MEDIUM"
-impactDescription: "Repeated server operations within one request can add avoidable work."
-tags: "react, performance, server, cache, react-cache, deduplication"
-
+impactDescription: "The same query or check repeated by several components in one request multiplies database and service load."
+tags: "react, server-components, cache, deduplication"
 attribution:
   - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-cache-react.md
-    description: "Underlying Vercel Agent Skills rule adapted in the source corpus."
+    description: "Adapted from the Vercel Agent Skills rule server-cache-react: restructured to the rule template with scope limits and validation."
 ---
 
-## Per-Request Deduplication with React.cache()
+## Deduplicate per-request server work with cache
 
-Use `React.cache()` for server-side request deduplication. Authentication and database queries benefit most.
+Wrap server data functions that several components call during one request in React's `cache`, so each distinct call runs once per request.
 
-**Usage:**
+### Implementation
 
-```typescript
-import { cache } from 'react'
+- Define the cached function at module level, and have every component call that same function.
+- Pass primitive arguments, or the same object reference; `cache` compares arguments with `Object.is`, so a new object literal is always a miss.
+- `cache` works only in Server Components and lasts for one server request; it does not share results across requests or users.
+- In Next.js, `fetch` requests with the same URL and options are already memoized during rendering, so `cache` is for non-fetch work such as database queries and authentication checks.
 
-export const getCurrentUser = cache(async () => {
-  const session = await auth()
-  if (!session?.user?.id) return null
-  return await db.user.findUnique({
-    where: { id: session.user.id }
-  })
-})
+### Rationale
+
+In a component tree, several components often need the same data, such as the current user.
+Passing it down through props couples them, but calling the query in each one repeats it.
+`cache` lets each component call the function independently while the query runs once per request.
+
+### Examples
+
+**Incorrect (counterexample):**
+
+```ts
+export const getUser = cache(async (params: { id: string }) => {
+  return db.user.findUnique({ where: { id: params.id } });
+});
+
+await getUser({ id: userId });
+await getUser({ id: userId }); // new object: runs the query again
 ```
 
-Within a single request, multiple calls to `getCurrentUser()` execute the query only once.
+**Correct:**
 
-**Avoid inline objects as arguments:**
+```ts
+export const getUser = cache(async (id: string) => {
+  return db.user.findUnique({ where: { id } });
+});
 
-`React.cache()` uses shallow equality (`Object.is`) to determine cache hits. Inline objects create new references each call, preventing cache hits.
-
-**Incorrect (always cache miss):**
-
-```typescript
-const getUser = cache(async (params: { uid: number }) => {
-  return await db.user.findUnique({ where: { id: params.uid } })
-})
-
-// Each call creates new object, never hits cache
-getUser({ uid: 1 })
-getUser({ uid: 1 })  // Cache miss, runs query again
+await getUser(userId);
+await getUser(userId); // same argument: returns the cached result
 ```
 
-**Correct (cache hit):**
+### Validation
 
-```typescript
-const getUser = cache(async (uid: number) => {
-  return await db.user.findUnique({ where: { id: uid } })
-})
+Log or count the underlying queries while rendering one page, and check that each distinct query runs once.
+Check that cached functions take primitive arguments.
 
-// Primitive args use value equality
-getUser(1)
-getUser(1)  // Cache hit, returns cached result
-```
-
-If you must pass objects, pass the same reference:
-
-```typescript
-const params = { uid: 1 }
-getUser(params)  // Query runs
-getUser(params)  // Cache hit (same reference)
-```
-
-**Next.js-Specific Note:**
-
-In Next.js, the `fetch` API is automatically extended with request memoization. Requests with the same URL and options are automatically deduplicated within a single request, so you don't need `React.cache()` for `fetch` calls. However, `React.cache()` is still essential for other async tasks:
-
-- Database queries (Prisma, Drizzle, etc.)
-- Heavy computations
-- Authentication checks
-- File system operations
-- Any non-fetch async work
-
-Use `React.cache()` to deduplicate these operations across your component tree.
-
-Reference: [React.cache documentation](https://react.dev/reference/react/cache)
-
-Source: [Vercel Agent Skills - react-best-practices/server-cache-react.md](https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/server-cache-react.md). Adapted with attribution.
+A query called once per request does not need `cache`.
