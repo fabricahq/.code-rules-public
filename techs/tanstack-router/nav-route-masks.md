@@ -1,206 +1,61 @@
 ---
-title: "nav-route-masks: Use Route Masks for Modal URLs"
-whenToRead: "Before making a TanStack Router modal, sheet, or overlay with a shareable URL and a full-page direct-entry view."
+title: "Mask modal routes with the resource's canonical URL"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Router UI that opens a resource in a modal, drawer, or quick view over another page, or uses route masks."
 impact: "LOW"
-impactDescription: "keeps modal and overlay URLs shareable without losing full-page routes"
-tags: "tanstack-router, route-masks, modals, navigation, urls"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/nav-route-masks.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-router/rules/nav-route-masks.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Modals opened with local state lose their place on back, refresh, and sharing, while masks pointing at the wrong URL share links that do not show the resource."
+tags: "tanstack-router, route-masking, modals, navigation"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/nav-route-masks.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule nav-route-masks (MIT, notice retained in NOTICE.md): restructured to the rule template and corrected the example to mask the modal route as the resource's canonical URL, matching documented sharing and reload behavior."
 ---
 
-## nav-route-masks: Use Route Masks for Modal URLs
+## Mask modal routes with the resource's canonical URL
 
-## Explanation
+When a resource opens in a modal over another page, give the modal its own route and navigate to it with a mask whose URL is the resource's full page, such as navigating to `/photos/5/modal` masked as `/photos/5`.
 
-Route masks let you display one URL while internally routing to another. This is useful for modals, sheets, and overlays where you want a shareable URL that shows the modal, but navigating there directly should show the full page.
+### Implementation
 
-## Bad Example
+- Create a route for the modal view, nested under the page it overlays, such as `/photos/$photoId/modal`.
+- Navigate to it with `mask` pointing at the resource's standalone page, such as `/photos/$photoId`.
+- Make the standalone page work on its own, because anyone who opens a shared link lands there.
+- Masks are kept in local history state: back and forward work, and a local reload keeps the mask unless `unmaskOnReload` is set.
+- A copied or shared URL loses the mask and opens the standalone page.
+- Use `createRouteMask` on the router for masks that apply to every navigation between two routes.
 
-```tsx
-// Modal without proper URL handling
-function PostList() {
-  const [selectedPost, setSelectedPost] = useState<string | null>(null)
+### Rationale
 
-  return (
-    <div>
-      {posts.map(post => (
-        <div key={post.id} onClick={() => setSelectedPost(post.id)}>
-          {post.title}
-        </div>
-      ))}
+A modal controlled by local state has no URL, so back does not close it, refresh loses it, and it cannot be shared.
+A route gives the modal history and loading like any page.
+Masking it with the resource's canonical URL means the address bar shows a meaningful URL, and anyone who opens that URL sees the resource as a full page.
 
-      {selectedPost && (
-        <Modal onClose={() => setSelectedPost(null)}>
-          <PostDetail postId={selectedPost} />
-        </Modal>
-      )}
-    </div>
-  )
-}
+### Examples
 
-// Problems:
-// - URL doesn't change when modal opens
-// - Can't share link to modal
-// - Back button doesn't close modal
-// - Refresh loses modal state
-```
-
-## Good Example: Route Masks for Modal
+**Incorrect (counterexample):**
 
 ```tsx
-// routes/posts.tsx
-export const Route = createFileRoute('/posts')({
-  component: PostList,
-})
-
-function PostList() {
-  const posts = usePosts()
-
-  return (
-    <div>
-      {posts.map(post => (
-        <Link
-          key={post.id}
-          to="/posts/$postId"
-          params={{ postId: post.id }}
-          mask={{
-            to: '/posts',
-            // URL shows /posts but routes to /posts/$postId
-          }}
-        >
-          {post.title}
-        </Link>
-      ))}
-      <Outlet />  {/* Modal renders here */}
-    </div>
-  )
-}
-
-// routes/posts/$postId.tsx
-export const Route = createFileRoute('/posts/$postId')({
-  component: PostModal,
-})
-
-function PostModal() {
-  const { postId } = Route.useParams()
-  const navigate = useNavigate()
-
-  return (
-    <Modal onClose={() => navigate({ to: '/posts' })}>
-      <PostDetail postId={postId} />
-    </Modal>
-  )
-}
-
-// User clicks post:
-// - URL stays /posts (masked)
-// - PostModal renders
-// - Share link goes to /posts/$postId (real URL)
-// - Direct navigation to /posts/$postId shows full page (no mask)
+<Link to="/posts/$postId" params={{ postId: post.id }} mask={{ to: '/posts' }}>
+  {post.title}
+</Link>
 ```
 
-## Good Example: With Search Params
+The address bar shows `/posts`, so a copied link opens the list instead of the post.
+
+**Correct:**
 
 ```tsx
-function PostList() {
-  return (
-    <div>
-      {posts.map(post => (
-        <Link
-          key={post.id}
-          to="/posts/$postId"
-          params={{ postId: post.id }}
-          mask={{
-            to: '/posts',
-            search: { modal: post.id },  // /posts?modal=123
-          }}
-        >
-          {post.title}
-        </Link>
-      ))}
-    </div>
-  )
-}
+<Link
+  to="/posts/$postId/modal"
+  params={{ postId: post.id }}
+  mask={{ to: '/posts/$postId', params: { postId: post.id } }}
+>
+  {post.title}
+</Link>
 ```
 
-## Good Example: Programmatic Navigation with Mask
+The modal opens over the list, the address bar shows the post's own URL, and sharing it opens the full post page.
 
-```tsx
-function PostCard({ post }: { post: Post }) {
-  const navigate = useNavigate()
+### Validation
 
-  const openInModal = () => {
-    navigate({
-      to: '/posts/$postId',
-      params: { postId: post.id },
-      mask: {
-        to: '/posts',
-      },
-    })
-  }
+Open the modal, then check that the address bar shows the resource's URL, that back closes the modal, and that opening the copied URL in a new tab shows the resource's full page.
 
-  const openFullPage = () => {
-    navigate({
-      to: '/posts/$postId',
-      params: { postId: post.id },
-      // No mask - shows real URL
-    })
-  }
-
-  return (
-    <div>
-      <h3>{post.title}</h3>
-      <button onClick={openInModal}>Quick View</button>
-      <button onClick={openFullPage}>Full Page</button>
-    </div>
-  )
-}
-```
-
-## Good Example: Unmask on Interaction
-
-```tsx
-function PostModal() {
-  const { postId } = Route.useParams()
-  const navigate = useNavigate()
-
-  const expandToFullPage = () => {
-    // Navigate to real URL, removing mask
-    navigate({
-      to: '/posts/$postId',
-      params: { postId },
-      // No mask = real URL
-      replace: true,  // Replace history entry
-    })
-  }
-
-  return (
-    <Modal>
-      <PostDetail postId={postId} />
-      <button onClick={expandToFullPage}>
-        Expand to full page
-      </button>
-    </Modal>
-  )
-}
-```
-
-## Route Mask Behavior
-
-| Scenario | URL Shown | Actual Route |
-|----------|-----------|--------------|
-| Click masked link | Masked URL | Real route |
-| Share/copy URL | Real URL | Real route |
-| Direct navigation | Real URL | Real route |
-| Browser refresh | Depends on URL in bar | Matches URL |
-| Back button | Previous URL | Previous route |
-
-## Context
-
-- Masks are client-side only - shared URLs are the real route
-- Direct navigation to real URL bypasses mask (shows full page)
-- Back button navigates through history correctly
-- Use for modals, side panels, quick views
-- Masks can include different search params
-- Consider UX: users expect shared URLs to work
-
-Source: [TanStack Agent Skills - tanstack-router/nav-route-masks.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/nav-route-masks.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A modal for transient UI with no shareable resource, such as a confirmation dialog, does not need a route.

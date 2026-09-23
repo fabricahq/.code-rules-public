@@ -1,187 +1,92 @@
 ---
-title: "nav-link-component: Prefer Link Component for Navigation"
-whenToRead: "Before adding navigation from a clickable UI element to another TanStack Router route."
+title: "Use Link for navigation users can open, and redirect in the router"
+whenToRead: "Before planning, writing, changing, or reviewing navigation in a TanStack Router app, such as clickable cards, menus, buttons that change pages, or redirects after checks."
 impact: "MEDIUM"
-impactDescription: "preserves accessible anchor behavior, preloading, and active route state"
-tags: "tanstack-router, link, navigation, accessibility, preloading"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/nav-link-component.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-router/rules/nav-link-component.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+impactDescription: "Navigation built from click handlers loses link behavior such as opening in a new tab and screen reader announcements, and redirects in Effects flash the wrong page."
+tags: "tanstack-router, navigation, Link, accessibility, redirects"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/nav-link-component.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule nav-link-component (MIT, notice retained in NOTICE.md): restructured to the rule template and replaced the Effect-based redirect with beforeLoad and Navigate."
 ---
 
-## nav-link-component: Prefer Link Component for Navigation
+## Use Link for navigation users can open, and redirect in the router
 
-## Explanation
+Render navigation the user triggers directly as a `<Link>`.
+Use `useNavigate` only for navigation that follows an action, such as after a form submits, and redirect with `beforeLoad` or `<Navigate>` rather than an Effect.
 
-Use the `<Link>` component for navigation instead of `useNavigate()` when possible. Links render proper `<a>` tags with valid `href` attributes, enabling right-click -> open in new tab, better SEO, and accessibility.
+### Implementation
 
-## Bad Example
+- Use `<Link>` for anything that behaves like a link, including cards and menu items, so it renders an `<a>` with an `href`.
+- Pass `params` and `search` to `Link` rather than building URL strings, so they are type-checked.
+- Use `search={(prev) => ({ ...prev, sort })}` to change one search param while keeping the others.
+- Use `activeProps` or the render-function children to style the active link.
+- Use `useNavigate` after an action completes, such as a successful mutation or sign-in.
+- Redirect unauthorized or misplaced users by throwing `redirect()` from `beforeLoad`, or render `<Navigate>` when the decision depends on render-time state.
+
+### Rationale
+
+An `<a href>` gets browser behavior that click handlers do not: opening in a new tab or window, copying the address, middle-clicking, crawling, and being announced as a link.
+`Link` also triggers route preloading on intent.
+A redirect in an Effect runs after the wrong page renders, so users see a flash of content they should not see.
+
+### Examples
+
+#### Application: A clickable card
+
+**Incorrect (counterexample):**
 
 ```tsx
-// Using onClick with navigate - loses standard link behavior
 function PostCard({ post }: { post: Post }) {
-  const navigate = useNavigate()
-
+  const navigate = useNavigate();
   return (
-    <div
-      onClick={() => navigate({ to: '/posts/$postId', params: { postId: post.id } })}
-      className="post-card"
-    >
+    <div onClick={() => navigate({ to: '/posts/$postId', params: { postId: post.id } })}>
       <h2>{post.title}</h2>
-      <p>{post.excerpt}</p>
     </div>
-  )
+  );
 }
-// Problems:
-// - No right-click -> open in new tab
-// - No cmd/ctrl+click for new tab
-// - Not announced as link to screen readers
-// - No valid href for SEO
 ```
 
-## Good Example
+The card cannot be opened in a new tab, is not announced as a link, and cannot be reached with the keyboard.
+
+**Correct:**
 
 ```tsx
-import { Link } from '@tanstack/react-router'
-
 function PostCard({ post }: { post: Post }) {
   return (
-    <Link
-      to="/posts/$postId"
-      params={{ postId: post.id }}
-      className="post-card"
-    >
+    <Link to="/posts/$postId" params={{ postId: post.id }}>
       <h2>{post.title}</h2>
-      <p>{post.excerpt}</p>
     </Link>
-  )
-}
-// Benefits:
-// - Renders <a href="/posts/123">
-// - Right-click menu works
-// - Cmd/Ctrl+click opens new tab
-// - Screen readers announce as link
-// - Preloading works on hover
-```
-
-## Good Example: With Search Params
-
-```tsx
-function FilteredLink() {
-  return (
-    <Link
-      to="/products"
-      search={{ category: 'electronics', sort: 'price' }}
-    >
-      View Electronics
-    </Link>
-  )
-}
-
-// Preserving existing search params
-function SortLink({ sort }: { sort: 'asc' | 'desc' }) {
-  return (
-    <Link
-      to="."  // Current route
-      search={(prev) => ({ ...prev, sort })}
-    >
-      Sort {sort === 'asc' ? 'Ascending' : 'Descending'}
-    </Link>
-  )
+  );
 }
 ```
 
-## Good Example: With Active States
+#### Application: A redirect
+
+**Incorrect (counterexample):**
 
 ```tsx
-function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Link
-      to={to}
-      activeProps={{
-        className: 'nav-link-active',
-        'aria-current': 'page',
-      }}
-      inactiveProps={{
-        className: 'nav-link',
-      }}
-      activeOptions={{
-        exact: true,  // Only active on exact match
-      }}
-    >
-      {children}
-    </Link>
-  )
-}
-
-// Or use render props for more control
-function CustomNavLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Link to={to}>
-      {({ isActive }) => (
-        <span className={isActive ? 'text-blue-600 font-bold' : 'text-gray-600'}>
-          {children}
-          {isActive && <CheckIcon className="ml-2" />}
-        </span>
-      )}
-    </Link>
-  )
-}
-```
-
-## Good Example: With Preloading
-
-```tsx
-function PostList({ posts }: { posts: Post[] }) {
-  return (
-    <ul>
-      {posts.map(post => (
-        <li key={post.id}>
-          <Link
-            to="/posts/$postId"
-            params={{ postId: post.id }}
-            preload="intent"      // Preload on hover/focus
-            preloadDelay={100}    // Wait 100ms before preloading
-          >
-            {post.title}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  )
-}
-```
-
-## When to Use useNavigate Instead
-
-```tsx
-// 1. After form submission
-const createPost = useMutation({
-  mutationFn: submitPost,
-  onSuccess: (data) => {
-    navigate({ to: '/posts/$postId', params: { postId: data.id } })
-  },
-})
-
-// 2. After authentication
-async function handleLogin(credentials: Credentials) {
-  await login(credentials)
-  navigate({ to: '/dashboard' })
-}
-
-// 3. Programmatic redirects
 useEffect(() => {
-  if (!isAuthenticated) {
-    navigate({ to: '/login', search: { redirect: location.pathname } })
-  }
-}, [isAuthenticated])
+  if (!isAuthenticated) navigate({ to: '/login' });
+}, [isAuthenticated, navigate]);
 ```
 
-## Context
+The protected page renders before the redirect runs.
 
-- `<Link>` renders actual `<a>` tags with proper `href`
-- Supports all standard link behaviors (middle-click, cmd+click, etc.)
-- Enables preloading on hover/focus
-- Better for SEO - crawlers can follow links
-- Reserve `useNavigate` for side effects and programmatic navigation
-- Use `<Navigate>` component for immediate redirects on render
+**Correct:**
 
-Source: [TanStack Agent Skills - tanstack-router/nav-link-component.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/nav-link-component.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+```tsx
+export const Route = createFileRoute('/_authenticated')({
+  beforeLoad: ({ context, location }) => {
+    if (!context.auth.isAuthenticated) {
+      throw redirect({ to: '/login', search: { redirect: location.href } });
+    }
+  },
+});
+```
+
+### Validation
+
+Check that elements that navigate on click render as links, by middle-clicking or inspecting for an `href`.
+Search for `navigate` calls inside `useEffect` and replace redirects with `beforeLoad` or `<Navigate>`.
+
+`useNavigate` after a form submission or other completed action is not a violation.

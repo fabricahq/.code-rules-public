@@ -1,203 +1,77 @@
 ---
-title: "err-not-found: Handle Not-Found Routes Properly"
-whenToRead: "Before handling missing routes or missing route data with TanStack Router, at either a root or nested route."
-impact: "HIGH"
-impactDescription: "prevents blank screens and generic errors for missing route data"
-tags: "tanstack-router, not-found, 404, errors, ux"
-attribution: [{"url":"https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/err-not-found.md","description":"Underlying tanstack-agent-skills material at skills/tanstack-router/rules/err-not-found.md, commit 0e8bcdc6af4959739e0f6a2dfb35dc70d513940a; adapted under MIT, with notice retained in the public library."}]
+title: "Throw notFound for missing resources and render it with notFoundComponent"
+whenToRead: "Before planning, writing, changing, or reviewing TanStack Router loaders that fetch a resource by URL parameters, or not-found pages and fallbacks."
+impact: "MEDIUM-HIGH"
+impactDescription: "Throwing a generic error for a missing resource shows an error page instead of a not-found page, and missing not-found components leave unknown URLs without useful content."
+tags: "tanstack-router, not-found, errors, 404"
+attribution:
+  - url: https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/err-not-found.md
+    description: "Adapted from Deckard Gerritsen TanStack Agent Skills rule err-not-found (MIT, notice retained in NOTICE.md): restructured to the rule template and corrected how notFoundComponent receives notFound data."
 ---
 
-## err-not-found: Handle Not-Found Routes Properly
+## Throw notFound for missing resources and render it with notFoundComponent
 
-## Explanation
+When a loader finds that the resource named by the URL does not exist, throw `notFound()`, not a generic error.
+Provide a `notFoundComponent` on the route or an ancestor, and a `defaultNotFoundComponent` on the router for everything else.
 
-Configure `notFoundComponent` to handle 404 errors gracefully. TanStack Router provides not-found handling at multiple levels: root, route-specific, and programmatic via `notFound()`. Proper configuration prevents blank screens and improves UX.
+### Implementation
 
-## Bad Example
+- Throw `notFound()` from a loader or `beforeLoad` when the requested resource does not exist.
+- Keep ordinary thrown errors for failures, such as a network error or a server error, which the route's error component handles.
+- Set `defaultNotFoundComponent` on the router, or `notFoundComponent` on the root route, so unmatched URLs show a useful page.
+- Add a route-level `notFoundComponent` where a more specific message helps, such as "Post not found" with a link to the list.
+- Pass context with `notFound({ data })`; the not-found component receives it as its `data` prop.
+- In a not-found component, `useParams()` and `useSearch()` work, but the route's loader data may not be available.
+- A thrown `notFound()` is handled by the same route or the nearest ancestor with a not-found component; target another route with `notFound({ routeId })`.
+- With server rendering, check that not-found pages respond with a 404 status, so crawlers and monitoring treat them as missing.
+
+### Rationale
+
+A missing resource is an expected outcome that users should be able to act on, such as by returning to a list.
+A generic error renders the error component, suggests something broke, and cannot be distinguished by crawlers or monitoring from real failures.
+`notFound()` lets the router render the nearest not-found component and preserve the surrounding layout.
+
+### Examples
+
+**Incorrect (counterexample):**
 
 ```tsx
-// No not-found handling - shows blank screen or error
-const router = createRouter({
-  routeTree,
-  // Missing defaultNotFoundComponent
-})
-
-// Or throwing generic error
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
-    const post = await fetchPost(params.postId)
-    if (!post) {
-      throw new Error('Not found')  // Generic error, not proper 404
-    }
-    return post
+    const post = await fetchPost(params.postId);
+    if (!post) throw new Error('Not found');
+    return post;
   },
-})
+});
 ```
 
-## Good Example: Root-Level Not Found
+The route shows its error component, as if the request had failed.
+
+**Correct:**
 
 ```tsx
-// routes/__root.tsx
-export const Route = createRootRoute({
-  component: RootComponent,
-  notFoundComponent: GlobalNotFound,
-})
-
-function GlobalNotFound() {
-  return (
-    <div className="not-found">
-      <h1>404 - Page Not Found</h1>
-      <p>The page you're looking for doesn't exist.</p>
-      <Link to="/">Go Home</Link>
-    </div>
-  )
-}
-
-// router.tsx - Can also set default
-const router = createRouter({
-  routeTree,
-  defaultNotFoundComponent: () => (
-    <div>
-      <h1>404</h1>
-      <Link to="/">Return Home</Link>
-    </div>
-  ),
-})
-```
-
-## Good Example: Route-Specific Not Found
-
-```tsx
-// routes/posts/$postId.tsx
-import { createFileRoute, notFound } from '@tanstack/react-router'
-
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
-    const post = await fetchPost(params.postId)
-    if (!post) {
-      throw notFound()  // Proper 404 handling
-    }
-    return post
+    const post = await fetchPost(params.postId);
+    if (!post) throw notFound({ data: { postId: params.postId } });
+    return post;
   },
-  notFoundComponent: PostNotFound,  // Custom 404 for this route
-  component: PostPage,
-})
-
-function PostNotFound() {
-  const { postId } = Route.useParams()
-
-  return (
-    <div>
-      <h1>Post Not Found</h1>
-      <p>No post exists with ID: {postId}</p>
-      <Link to="/posts">Browse all posts</Link>
-    </div>
-  )
-}
+  notFoundComponent: ({ data }) => {
+    const { postId } = data as { postId: string };
+    return (
+      <div>
+        <h1>Post not found</h1>
+        <p>No post exists with ID {postId}.</p>
+        <Link to="/posts">Browse all posts</Link>
+      </div>
+    );
+  },
+});
 ```
 
-## Good Example: Not Found with Data
+### Validation
 
-```tsx
-export const Route = createFileRoute('/users/$username')({
-  loader: async ({ params }) => {
-    const user = await fetchUser(params.username)
-    if (!user) {
-      throw notFound({
-        // Pass data to notFoundComponent
-        data: {
-          username: params.username,
-          suggestions: await fetchSimilarUsernames(params.username),
-        },
-      })
-    }
-    return user
-  },
-  notFoundComponent: UserNotFound,
-})
+Visit a URL whose resource does not exist and an unmatched URL, and check that each shows a not-found page, not an error page or blank screen.
+Check that loaders throw `notFound()` rather than generic errors for missing resources.
 
-function UserNotFound() {
-  const { data } = Route.useMatch()
-
-  return (
-    <div>
-      <h1>User @{data?.username} not found</h1>
-      {data?.suggestions?.length > 0 && (
-        <div>
-          <p>Did you mean:</p>
-          <ul>
-            {data.suggestions.map((username) => (
-              <li key={username}>
-                <Link to="/users/$username" params={{ username }}>
-                  @{username}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  )
-}
-```
-
-## Good Example: Catch-All Route
-
-```tsx
-// routes/$.tsx - Catch-all splat route
-export const Route = createFileRoute('/$')({
-  component: CatchAllNotFound,
-})
-
-function CatchAllNotFound() {
-  const { _splat } = Route.useParams()
-
-  return (
-    <div>
-      <h1>Page Not Found</h1>
-      <p>No page exists at: /{_splat}</p>
-      <Link to="/">Go to homepage</Link>
-    </div>
-  )
-}
-```
-
-## Good Example: Nested Not Found Bubbling
-
-```tsx
-// Not found bubbles up through route tree
-// routes/posts.tsx
-export const Route = createFileRoute('/posts')({
-  notFoundComponent: PostsNotFound,  // Catches child 404s too
-})
-
-// routes/posts/$postId.tsx
-export const Route = createFileRoute('/posts/$postId')({
-  loader: async ({ params }) => {
-    const post = await fetchPost(params.postId)
-    if (!post) throw notFound()
-    return post
-  },
-  // No notFoundComponent - bubbles to parent
-})
-
-// routes/posts/$postId/comments.tsx
-export const Route = createFileRoute('/posts/$postId/comments')({
-  loader: async ({ params }) => {
-    const comments = await fetchComments(params.postId)
-    if (!comments) throw notFound()  // Bubbles to /posts notFoundComponent
-    return comments
-  },
-})
-```
-
-## Context
-
-- `notFound()` throws a special error caught by nearest `notFoundComponent`
-- Not found bubbles up the route tree if not handled locally
-- Use `defaultNotFoundComponent` on router for global fallback
-- Pass data to `notFound({ data })` for contextual 404 pages
-- Catch-all routes (`/$`) can handle truly unknown paths
-- Different from error boundaries - specifically for 404 cases
-
-Source: [TanStack Agent Skills - tanstack-router/err-not-found.md](https://github.com/DeckardGer/tanstack-agent-skills/blob/0e8bcdc6af4959739e0f6a2dfb35dc70d513940a/skills/tanstack-router/rules/err-not-found.md). Adapted with attribution; see the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A generic error thrown for an actual failure, such as a server error, is not a violation.
