@@ -4,7 +4,6 @@ whenToRead: "When adding or changing collection processing, thresholds, ranges, 
 impact: "MEDIUM"
 impactDescription: "Catches failures hidden by tests that exercise only ordinary inputs."
 tags: "testing"
-attribution: [{"url": "https://github.com/josh-padnick/code-rules/blob/0621607fae1ed732a2ec90d9bbe906bc5a4ecf78/typescript/testing-cover-degenerate-and-boundary-cases.md", "description": "Adapted for public reuse: added reading guidance, simplified examples, and removed repository-specific assumptions."}]
 ---
 
 ## Cover empty inputs and boundaries

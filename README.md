@@ -1,6 +1,6 @@
 # Fabrica public rules
 
-A small library of engineering rules you can share across projects and give to your coding agents. Fabrica maintains these rules for anyone who finds them useful.
+This repository is Fabrica's canonical public rule library. Its engineering rules can be shared across projects and given to coding agents.
 
 Each rule explains an engineering expectation, when it applies, and how to check whether a change follows it. Start with one group, read its rules, and adopt the guidance that fits your project.
 
@@ -77,6 +77,6 @@ Maintainers review changes through pull requests and publish version tags for ap
 
 ## License and sources
 
-The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Selected rules are public adaptations of Josh Padnick's engineering rule collection. Some also draw on mkosir's TypeScript Style Guide.
+The library uses the [MIT license](LICENSE.md), with copyright attributed to Fabrica Systems LLC. Some rules adapt mkosir's TypeScript Style Guide.
 
-Per-rule metadata records source revisions and adaptations. [NOTICE.md](NOTICE.md) preserves the upstream notices; some original source links may require repository access.
+Rules adapted from third-party sources carry attribution in their metadata. [NOTICE.md](NOTICE.md) preserves the required third-party notice.

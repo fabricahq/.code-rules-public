@@ -4,7 +4,6 @@ whenToRead: "When diagnosing and fixing a reproducible behavior defect."
 impact: "HIGH"
 impactDescription: "Prevents a fixed bug from returning unnoticed in a later change."
 tags: "testing"
-attribution: [{"url": "https://github.com/josh-padnick/code-rules/blob/0621607fae1ed732a2ec90d9bbe906bc5a4ecf78/typescript/testing-regression-test-every-bug-fix.md", "description": "Adapted for public reuse: added reading guidance, simplified examples, and removed repository-specific assumptions."}]
 ---
 
 ## Reproduce bugs with regression tests

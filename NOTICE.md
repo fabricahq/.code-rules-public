@@ -1,8 +1,6 @@
 # Source notices
 
-Selected rules were adapted from the author-provided josh-padnick/code-rules corpus at commit 0621607fae1ed732a2ec90d9bbe906bc5a4ecf78. That source repository may require access. Per-rule attribution records the original files and adaptation. The library omits domain-specific rules, internal tooling, and private application code.
-
-The observable-behavior testing rule and TypeScript rules also adapt the TypeScript Style Guide by mkosir at commit 86bebd58a987e23277dba02028c0ee2d6ffb5073. Its notice follows unchanged:
+The observable-behavior testing rule and TypeScript rules adapt the TypeScript Style Guide by mkosir at commit 86bebd58a987e23277dba02028c0ee2d6ffb5073. Its notice follows unchanged:
 
 MIT License
 

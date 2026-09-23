@@ -4,7 +4,7 @@ whenToRead: "When a TypeScript value has variants with different required fields
 impact: "MEDIUM"
 impactDescription: "Makes impossible field combinations harder to construct and missing cases easier to detect."
 tags: "typescript"
-attribution: [{"url": "https://github.com/josh-padnick/code-rules/blob/0621607fae1ed732a2ec90d9bbe906bc5a4ecf78/typescript/model-complex-variants-as-discriminated-unions.md", "description": "Adapted for public reuse: added reading guidance, simplified examples, and removed repository-specific assumptions."}, {"url": "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx", "description": "Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
+attribution: [{"url": "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx", "description": "Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
 ---
 
 ## Model distinct states as discriminated unions

@@ -4,7 +4,6 @@ whenToRead: "When a function mixes orchestration with parsing, validation, or no
 impact: "MEDIUM"
 impactDescription: "Helps readers understand the operation without tracing every implementation detail."
 tags: "code-design"
-attribution: [{"url": "https://github.com/josh-padnick/code-rules/blob/0621607fae1ed732a2ec90d9bbe906bc5a4ecf78/practices/code-design/express-operations-as-meaningful-steps.md", "description": "Added reading guidance and compatible attribution; retained the generic examples and removed a cross-reference outside this library."}]
 ---
 
 ## Express operations as meaningful steps

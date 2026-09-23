@@ -4,7 +4,7 @@ whenToRead: "When designing or reviewing automated tests for application behavio
 impact: "HIGH"
 impactDescription: "Keeps tests useful during refactoring and focused on outcomes users depend on."
 tags: "testing"
-attribution: [{"url": "https://github.com/josh-padnick/code-rules/blob/0621607fae1ed732a2ec90d9bbe906bc5a4ecf78/typescript/write-focused-user-oriented-tests.md", "description": "Adapted for public reuse: added reading guidance, simplified examples, and removed repository-specific assumptions."}, {"url": "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx", "description": "Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
+attribution: [{"url": "https://github.com/mkosir/typescript-style-guide/blob/86bebd58a987e23277dba02028c0ee2d6ffb5073/website/src/pages/index.mdx", "description": "Underlying TypeScript Style Guide material by mkosir, adapted under MIT; copyright and permission notice retained in NOTICE.md."}]
 ---
 
 ## Test observable behavior
