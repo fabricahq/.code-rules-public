@@ -1,5 +1,0 @@
-{
-  "name": "Code design",
-  "description": "Make operations understandable while keeping implementation details together.",
-  "whenToRead": "When planning, implementing, refactoring, or reviewing function and module structure."
-}

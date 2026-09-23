@@ -25,7 +25,7 @@ Practice groups apply across languages. Their TypeScript examples illustrate the
 The library contains source rules and group metadata:
 
 ```text
-rule-library.json        Library format and license information
+rule-library.yaml        Library format and license information
 practices/               Practices that apply across technologies
   code-design/
   testing/
@@ -33,29 +33,31 @@ techs/                   Guidance for a specific technology
   typescript/
 ```
 
-Each group includes `_group.json` metadata, a README, and one Markdown file per rule. For format details, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
+Each group includes `_group.yaml` metadata, a README, and one Markdown file per rule. For format details, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
 ## Use the library
+
+The library manifest (`rule-library.yaml`) and group metadata (`_group.yaml`) use YAML. These formats require the CLI changes in [Code Rules PR #55](https://github.com/fabricahq/code-rules/pull/55); merge that support before publishing this library’s first version.
 
 The first release, `v0.1.0`, must be published before the commands below work. Until then, the proposed library is available for review in this repository's pull requests.
 
 After that release, [install Code Rules](https://code-rules.fabricahq.com/start-here/install/) and run these commands from your project's root:
 
 ```sh
-code-rules init
-code-rules add source fabrica \
+code-rules project init
+code-rules project add library fabrica \
   --repository https://github.com/fabricahq/.code-rules-public.git \
   --ref v0.1.0 \
   --groups practices/code-design
-code-rules sync
-code-rules check
+code-rules project sync
+code-rules project check
 ```
 
 This imports only the Code design group. In the proposed `v0.1.0` release, that group contains one rule: [Express operations as meaningful steps](practices/code-design/express-operations-as-meaningful-steps.md).
 
 Open `.code-rules/generated/RULES.md` to read the generated guidance. Then connect it to your agent's project instructions using the [first-project walkthrough](https://code-rules.fabricahq.com/start-here/set-up-project/).
 
-To select more groups, repeat `--groups` for each group ID when adding the source. Pin a published tag or full commit so your project adopts updates deliberately. For exclusions and replacements, see [Import and customize rules](https://code-rules.fabricahq.com/guides/select-rules/).
+To select more groups, repeat `--groups` for each group ID when adding the source. Pin a published tag or full commit so your project adopts updates deliberately. For exclusions and replacements, see [Import rules](https://code-rules.fabricahq.com/guides/select-rules/).
 
 ## Propose a change
 

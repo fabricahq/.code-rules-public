@@ -1,5 +1,0 @@
-{
-  "name": "TypeScript",
-  "description": "Use types and data ownership to prevent invalid states and accidental mutation.",
-  "whenToRead": "When planning, implementing, changing, or reviewing TypeScript code."
-}
