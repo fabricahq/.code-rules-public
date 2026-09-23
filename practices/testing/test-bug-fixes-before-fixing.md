@@ -35,6 +35,8 @@ A test written after a fix may never have been able to fail.
 Running it against the unfixed code first proves that it detects the bug.
 A later change that reintroduces the bug then fails the test instead of reaching users again.
 
+Background: [Testing philosophy](../../assets/testing-philosophy.md).
+
 ### Examples
 
 #### Application: A logic bug a unit test can reproduce
@@ -66,8 +68,6 @@ It passes before the fix, because the defect is in how the page supplies the ide
 
 Write an integration or UI test that navigates from one record to another and asserts the second record's details.
 Confirm that it shows the first record's details before the fix.
-
-Background: [Testing philosophy](../../assets/testing-philosophy.md).
 
 ### Validation
 
