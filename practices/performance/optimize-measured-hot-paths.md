@@ -5,24 +5,8 @@ impact: "MEDIUM"
 impactDescription: "Repeated searches, passes, and recomputation in hot code multiply with input size, while speculative micro-optimizations elsewhere add complexity without measurable gain."
 tags: "performance, algorithms, collections, caching"
 attribution:
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-set-map-lookups.md
-    description: "Adapted from the Vercel Agent Skills rule js-set-map-lookups: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-index-maps.md
-    description: "Adapted from the Vercel Agent Skills rule js-index-maps: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-combine-iterations.md
-    description: "Adapted from the Vercel Agent Skills rule js-combine-iterations: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-early-exit.md
-    description: "Adapted from the Vercel Agent Skills rule js-early-exit: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-hoist-regexp.md
-    description: "Adapted from the Vercel Agent Skills rule js-hoist-regexp: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-length-check-first.md
-    description: "Adapted from the Vercel Agent Skills rule js-length-check-first: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-min-max-loop.md
-    description: "Adapted from the Vercel Agent Skills rule js-min-max-loop: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-cache-function-results.md
-    description: "Adapted from the Vercel Agent Skills rule js-cache-function-results: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
-  - url: https://github.com/vercel-labs/agent-skills/blob/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules/js-cache-storage.md
-    description: "Adapted from the Vercel Agent Skills rule js-cache-storage: merged nine JavaScript performance rules into one language-neutral practice with a measure-first requirement, restructured to the rule template, and removed claims that depended on engine details."
+  - url: https://github.com/vercel-labs/agent-skills/tree/4ec6f84b61cd3c931046c3e6e398f3ae7de372f7/skills/react-best-practices/rules
+    description: "Adapted from nine Vercel Agent Skills React best-practice rules (js-set-map-lookups, js-index-maps, js-combine-iterations, js-early-exit, js-hoist-regexp, js-length-check-first, js-min-max-loop, js-cache-function-results, and js-cache-storage), merged into one language-neutral practice with a measure-first requirement and without claims that depend on engine details."
 ---
 
 ## Optimize measured hot paths by removing repeated work
