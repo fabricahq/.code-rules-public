@@ -18,7 +18,7 @@ Giving an agent a rule does not guarantee compliance. Ask your agent to read the
 | --- | --- | --- |
 | [Code design](practices/code-design/) | 1 | Express operations as meaningful steps |
 | [Testing](practices/testing/) | 6 | Choose tests by risk, test at the lowest layer, keep tests independent, test behavior, reproduce bugs, and cover boundary cases |
-| [Go](techs/go/) | 6 | Explain contracts, preserve useful errors, and test boundaries |
+| [Go](techs/go/) | 4 | Explain contracts and preserve useful errors |
 | [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
 | [Playwright](techs/playwright/) | 3 | Keep browser tests independent and use stable locators |
 | [React](techs/react/) | 87 | Structure components, manage state, and avoid unnecessary work |
@@ -27,7 +27,7 @@ Giving an agent a rule does not guarantee compliance. Ask your agent to read the
 | [TypeScript](techs/typescript/) | 33 | Model data, preserve contracts, and keep code understandable |
 | [Zustand](techs/zustand/) | 11 | Design stores, subscriptions, and persistence |
 
-The 188 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
+The 186 rules are independently selectable. A group's rules describe their own scope: some React rules apply only to Next.js or particular React APIs. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements.
 
 Practice groups apply across languages. Their TypeScript examples illustrate the ideas; they do not limit those practices to TypeScript projects.
 
