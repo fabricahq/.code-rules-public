@@ -17,7 +17,7 @@ Look for cases in three places:
 
 - **Collections:** empty and single-item inputs.
   An empty input often means there is nothing to loop over or renumber, and a single item skips the logic that runs between items.
-- **Positions and thresholds:** the first slot, the last slot, and the values just on each side of every threshold.
+- **Positions and thresholds:** the first and last positions, each exact threshold, and the nearest meaningful values on either side.
 - **Relationships:** the same item on both sides, and a missing counterpart, such as a root item that has no parent.
 
 Use the implementation to find boundaries the contract leaves implicit, but choose and assert cases through the interface callers use.
@@ -28,8 +28,9 @@ Do not repeat edge-case variants in UI or end-to-end tests unless the boundary e
 Keep each case cheap: a table-driven or parameterized test can hold one row per boundary.
 Be most thorough where a wrong edge result loses or corrupts data.
 
-Add a case for each distinct behavior, not for every possible input.
-An input needs no separate test when it takes the same path as a tested case, or when the contract or type system rules it out, such as an empty list passed to a function that only accepts a non-empty type.
+Choose representative inputs for each behavior the contract defines, and test the boundaries between those behaviors.
+Avoid additional cases unless they exercise a distinct requirement or plausible failure.
+An input the contract or type system rules out needs no test, such as an empty list passed to a function that only accepts a non-empty type.
 
 When an edge-case bug gets past the tests, reproduce it with a failing test before fixing it, and keep that test.
 
@@ -60,8 +61,8 @@ The test still passes if the upper check is written as `count < 3`, which wrongl
 Test 0, 1, 3, and 4, and assert the documented acceptance or error for each.
 1 and 3 prove the inclusive bounds, and 0 and 4 prove the rejections.
 
-A suite that already covers 0, 1, 3, and 4 does not need a test for 2.
-It sits inside the tested bounds and takes the same path, so it would catch no additional regression.
+Testing 2 is optional for boundary coverage, because 1 and 3 already represent the accepted range.
+Add it when a value inside the range exercises a distinct requirement or plausible failure.
 
 #### Application: An item related to itself
 
@@ -97,7 +98,7 @@ Document that result, enforce it in the implementation, and assert it in the tes
 Before judging coverage, read the contract: the documentation, types, and input validation of the code under test.
 List the boundaries it defines and match each one to a test that asserts the intended result, not only the absence of a crash.
 
-To confirm that a boundary test works, change the comparison at that boundary in a disposable checkout, such as `<=` to `<`.
+Optionally, to confirm that a boundary test works, change the comparison at that boundary in a disposable checkout, such as `<=` to `<`.
 The test should fail.
 
-A missing case is not a violation when it takes the same path as a tested case, or when the contract or type system rules the input out.
+A missing case is not a violation when the contract treats the input the same as a tested case and it exercises no distinct requirement or plausible failure, or when the contract or type system rules the input out.
