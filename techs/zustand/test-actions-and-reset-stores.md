@@ -1,66 +1,66 @@
 ---
-title: "Test Actions and Reset Stores"
-whenToRead: "Before writing tests for Zustand actions or components that share a module-level store."
+title: "Reset stores between tests and test actions directly"
+whenToRead: "Before planning, writing, changing, or reviewing tests for code that uses Zustand stores, including tests that render components reading a module-level store."
 impact: "MEDIUM"
-impactDescription: "keeps store tests focused and prevents module-level state from leaking between test cases"
-tags: "zustand, testing, actions, reset-state, isolation"
+impactDescription: "Module-level stores keep their state between tests, so tests pass or fail depending on which ran before them."
+tags: "zustand, testing, test-isolation"
 ---
 
-## Test Actions and Reset Stores
+## Reset stores between tests and test actions directly
 
-Test Zustand action behavior directly when possible, and reset module-level stores between tests. Component tests should cover UI integration, not every store transition.
+Reset every module-level store to its initial state before each test, including its actions.
+Test store logic by calling actions through `getState()`, and use component tests for how the UI uses the store.
 
-**Incorrect:**
+### Implementation
 
-```tsx
-test("selects a block", async () => {
-  render(<Editor />);
+- Capture the complete initial state, actions included, right after creating the store, such as `const initialState = useEditorStore.getState()`.
+- Before each test, restore it with `useEditorStore.setState(initialState, true)`.
+- Do not reset with a hand-written object passed as a full replacement; replacing without the actions removes them from the store.
+- Alternatively, mock `zustand` as its testing guide describes, so every store created in tests resets automatically.
+- Test actions directly for state transitions, and render components when the behavior involves rendering, interaction, or accessibility.
+- Mock the server-state layer or service boundaries directly, rather than routing fetched data through a store to make tests easier.
 
-  await user.click(screen.getByRole("button", { name: "Block 1" }));
+### Rationale
 
-  expect(screen.getByTestId("selected-block")).toHaveTextContent("Block 1");
+A store created at module scope lives as long as the test run.
+State one test leaves behind changes the next test's starting point, so results depend on order.
+`setState(state, true)` replaces the whole state object; a replacement without the action functions leaves the store with no actions, and the next call fails.
+
+### Examples
+
+**Incorrect (counterexample):**
+
+```ts
+beforeEach(() => {
+  useEditorStore.setState({ selectedBlockId: null }, true);
 });
 
-test("starts with no selected block", () => {
-  render(<Editor />);
-
-  // This can fail if the previous test left the singleton store dirty.
-  expect(screen.getByTestId("selected-block")).toHaveTextContent("None");
+test('selects a block', () => {
+  useEditorStore.getState().selectBlock('block-1');
+  // ...
 });
 ```
+
+The replacement object has no actions. TypeScript rejects this call for a typed store, and in untyped or cast code the reset removes `selectBlock`, so the test throws.
 
 **Correct:**
 
 ```ts
-const initialEditorState = {
-  selectedBlockId: null,
-  dirtyFieldIds: new Set<string>(),
-};
+const initialEditorState = useEditorStore.getState();
 
 beforeEach(() => {
   useEditorStore.setState(initialEditorState, true);
 });
 
-test("selects a block", () => {
-  useEditorStore.getState().selectBlock("block-1");
-
-  expect(useEditorStore.getState().selectedBlockId).toBe("block-1");
-});
-
-test("clears selection", () => {
-  useEditorStore.setState({ selectedBlockId: "block-1" });
-
-  useEditorStore.getState().clearSelection();
-
-  expect(useEditorStore.getState().selectedBlockId).toBeNull();
+test('selects a block', () => {
+  useEditorStore.getState().selectBlock('block-1');
+  expect(useEditorStore.getState().selectedBlockId).toBe('block-1');
 });
 ```
 
-**Guidelines:**
+### Validation
 
-- Test actions directly for state-machine transitions, resets, persistence helpers, and selector behavior.
-- Reset each store to its initial state in `beforeEach` when tests touch singleton stores.
-- Mock server-state libraries or service boundaries directly instead of routing fetched data through Zustand for test convenience.
-- Use component tests for UI behavior that depends on store subscription, rendering, accessibility, or user interaction.
+Run the test file in random order, or run each test alone, and check that results do not change.
+Check that every reset restores a complete state that includes the actions.
 
-References: Synthesized from the Zustand guidance sources listed in the [public library notice](https://github.com/fabricahq/.code-rules-public/blob/main/NOTICE.md).
+A test file that never touches a store does not need a reset.
