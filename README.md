@@ -74,9 +74,9 @@ Code Rules is designed to allow importing whatever collection of rules you want,
 
 ### What if I find a mistake in a rule?
 
-These rules are based on Fabrica's own real world experience, and our experience may vary from yours! Still, if you find a mistake with a rule, we respect your experience and welcome a contribution to help us improve it.
+Open a pull request that fixes it. See [How do I contribute?](#how-do-i-contribute) for how to check your change before you submit it.
 
-When you improve a single rule, all consumers of Fabrica Public Library benefit.
+These rules come from Fabrica's own real-world experience, and yours may differ. If a rule is wrong or incomplete, we welcome the fix, and everyone who uses Fabrica Public Library benefits from it.
 
 ## How do I contribute?
 
