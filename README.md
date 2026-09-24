@@ -1,4 +1,4 @@
-# Fabrica Public Library
+# Fabrica Public Rules Library
 
 <p>
   <a href="LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
@@ -6,21 +6,21 @@
   <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
 </p>
 
-## What is Fabrica Public Library?
+## What is Fabrica Public Rules Library?
 
-Fabrica Public Library is an open source collection of coding best practices designed for use with [Code Rules](https://github.com/fabricahq/code-rules).
+Fabrica Public Rules Library is an open source collection of coding best practices designed for use with [Code Rules](https://github.com/fabricahq/code-rules).
 
 ## Why use it?
 
 Agents are capable of writing testable, maintainable, well-organized code, but they don’t do it by default. They only do it when you tell them how.
 
-Fabrica Public Library is a collection of rules curated or authored by [Fabrica](https://fabricahq.com) that cover a range of topics from testing to error handling to React to Go and beyond. Collectively, they guide your agent on how to write production-grade code.
+Fabrica Public Rules Library is a collection of rules curated or authored by [Fabrica](https://fabricahq.com) that cover a range of topics from testing to error handling to React to Go and beyond. Collectively, they guide your agent on how to write production-grade code.
 
 ## How does it work?
 
 This repo is meant to be used together with [Code Rules](https://github.com/fabricahq/code-rules).
 
-Code Rules is a package manager for engineering practices. When you configure a project to use Code Rules, you add rules you want your agents to follow when writing or validating code. Those rules can either be written for that project alone, or imported from a library, like this repo, Fabrica Public Library.
+Code Rules is a package manager for engineering practices. When you configure a project to use Code Rules, you add rules you want your agents to follow when writing or validating code. Those rules can either be written for that project alone, or imported from a library, like this repo, Fabrica Public Rules Library.
 
 ## How do I use this repo?
 
@@ -30,7 +30,7 @@ Code Rules is a package manager for engineering practices. When you configure a 
 
    ```sh
    code-rules project add library fabrica \
-     --repository https://github.com/fabricahq/.code-rules-public.git \
+     --repository https://github.com/fabricahq/public-rules.git \
      --groups practices/code-design \
      --groups practices/performance \
      --groups practices/testing \
@@ -76,7 +76,7 @@ Code Rules is designed to allow importing whatever collection of rules you want,
 
 Open a pull request that fixes it. See [How do I contribute?](#how-do-i-contribute) for how to check your change before you submit it.
 
-These rules come from Fabrica's own real-world experience, and yours may differ. If a rule is wrong or incomplete, we welcome the fix, and everyone who uses Fabrica Public Library benefits from it.
+These rules come from Fabrica's own real-world experience, and yours may differ. If a rule is wrong or incomplete, we welcome the fix, and everyone who uses Fabrica Public Rules Library benefits from it.
 
 ## How do I contribute?
 
