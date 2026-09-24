@@ -1,10 +1,58 @@
 # Fabrica Public Library
 
-A collection of public engineering rules for [Fabrica Code Rules](https://github.com/fabricahq/code-rules), covering testing, code design, TypeScript, React, TanStack, Zustand, Playwright, and Go.
+<p>
+  <a href="LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+  <a href="https://github.com/fabricahq/code-rules"><img alt="A Code Rules library" src="https://img.shields.io/badge/Code%20Rules-library-6f42c1"></a>
+  <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
+</p>
 
-Import the groups that fit your project, and Code Rules keeps them versioned and ready for your coding agents to read. New to Code Rules? Start with [What is Code Rules?](https://code-rules.fabricahq.com/start-here/overview/) and [Library](https://code-rules.fabricahq.com/concepts/libraries/).
+## What is Fabrica Public Library?
 
-## Groups
+Fabrica Public Library is an open source collection of coding best practices designed for use with [Code Rules](https://github.com/fabricahq/code-rules).
+
+## Why use it?
+
+Agents are capable of writing testable, maintainable, well-organized code, but they don’t do it by default. They only do it when you tell them how.
+
+But organizing what to tell an agent is painful and error prone. That's why we wrote [Code Rules](https://github.com/fabricahq/code-rules), which is a "package manager" for engineering guidance or "rules."
+
+Code Rules the tool organizes arbitrary rules. This repo is Fabrica's collection of rules we use in our own software development.
+
+## How do I use this repo?
+
+1. [Install Code Rules](https://code-rules.fabricahq.com/start-here/install/).
+2. [Set up your project](https://code-rules.fabricahq.com/start-here/set-up-project/) to use Code Rules.
+3. Add this library as a source. From your project's root, run the command below. It selects every group; delete the `--groups` lines you don't need.
+
+   ```sh
+   code-rules project add library fabrica \
+     --repository https://github.com/fabricahq/.code-rules-public.git \
+     --groups practices/code-design \
+     --groups practices/performance \
+     --groups practices/testing \
+     --groups techs/go \
+     --groups techs/goose \
+     --groups techs/javascript \
+     --groups techs/playwright \
+     --groups techs/react \
+     --groups techs/tanstack-query \
+     --groups techs/tanstack-router \
+     --groups techs/typescript \
+     --groups techs/zustand \
+     --ref v0.1.0
+   ```
+
+   > **Note:** `v0.1.0` hasn't been tagged yet. Until it is, replace `v0.1.0` with a full commit SHA from `main`.
+
+4. Download the rules and build the guidance your agent reads:
+
+   ```sh
+   code-rules project sync
+   ```
+
+5. If you haven't already, [tell your agent to read the rules](https://code-rules.fabricahq.com/start-here/set-up-project/#5-give-the-rules-to-your-agent), then commit the `.code-rules/` directory.
+
+## What's included?
 
 | Group | Rules | Description |
 | --- | --: | --- |
@@ -23,32 +71,7 @@ Import the groups that fit your project, and Code Rules keeps them versioned and
 
 Practice groups (`practices/`) apply in any language. Technology groups (`techs/`) cover one language, framework, or tool.
 
-## Use the library
-
-[Install Code Rules](https://code-rules.fabricahq.com/start-here/install/), then import the groups you want from your project's root:
-
-```sh
-code-rules project init
-code-rules project add library fabrica \
-  --repository https://github.com/fabricahq/.code-rules-public.git \
-  --ref v0.1.0 \
-  --groups practices/testing \
-  --groups techs/typescript
-code-rules project sync
-```
-
-> [!NOTE]
-> `v0.1.0` hasn't been tagged yet. Until it is, pass a full commit SHA from `main` to `--ref` instead.
-
-Repeat `--groups` for each group you want, or use `'practices/*'`, `'techs/*'`, or `'*'`. To connect the rules to your agent, follow [Set up your first project](https://code-rules.fabricahq.com/start-here/set-up-project/). To leave out or replace individual rules, see [Import rules](https://code-rules.fabricahq.com/guides/select-rules/).
-
-## How the rules are written
-
-Every rule follows the Code Rules [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/): one obligation, stated first, with implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md). The testing rules also share a [testing philosophy](assets/testing-philosophy.md), based on Yevgeniy Brikman's talk _Agility Requires Safety_.
-
-These rules are opinions. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements, and some rules apply only in particular contexts, such as Next.js. Each rule's reading cue and exceptions say when it applies.
-
-## Browse the rules
+### Browse all 119 rules
 
 <details>
 <summary><strong>Testing</strong> · 8 rules</summary>
@@ -241,9 +264,17 @@ These rules are opinions. Style preferences and performance techniques are choic
 
 </details>
 
-## Contributing
+## What does a rule look like?
 
-Pull requests are welcome. Describe the problem the change addresses, keep each rule focused on one expectation, and follow the [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/). Before opening a pull request, validate the library from its root:
+Every rule states one obligation, then gives implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md). The testing rules also share a [testing philosophy](assets/testing-philosophy.md), based on Yevgeniy Brikman's talk _Agility Requires Safety_.
+
+## Do I have to follow every rule?
+
+No. These rules are opinions, and some apply only in particular contexts, such as Next.js. Each rule's reading cue and exceptions say when it applies. Import only the groups you want, and [exclude or replace](https://code-rules.fabricahq.com/guides/select-rules/) any rule that doesn't fit your project.
+
+## How do I contribute?
+
+Open a pull request that describes the problem your change addresses. Keep each rule focused on one expectation, follow the [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/), and validate the library from its root before you push:
 
 ```sh
 code-rules library check
