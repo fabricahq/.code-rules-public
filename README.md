@@ -88,7 +88,7 @@ Be sure to follow the [Code Rules authoring rubric](https://code-rules.fabricahq
 code-rules library check
 ```
 
-Maintainers review changes in pull requests and publish version tags for approved releases. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
+Maintainers review changes in pull requests. Releases are made with [Release Planner](https://github.com/fabricahq/release-planner): an agent drafts the notes in a release pull request, and merging it tags and publishes the release. The [release policy](.release-planner/policy.md) explains how versions are chosen and what counts as a breaking change. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
 ## License and sources
 
