@@ -62,7 +62,9 @@ Code Rules is a package manager for engineering practices. When you configure a 
 
 ### What does a rule look like?
 
-Every rule states one obligation, then gives implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md).
+A rule is a Markdown file. Its YAML frontmatter gives the rule a title, says when an agent should read it, and describes why it matters. Its body states one obligation, then gives implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md).
+
+Every rule in this library follows the Code Rules [rule rubric and template](https://code-rules.fabricahq.com/reference/rule-authoring/).
 
 ### Do I have to follow every rule?
 
