@@ -88,7 +88,7 @@ Be sure to follow the [Code Rules authoring rubric](https://code-rules.fabricahq
 code-rules library check
 ```
 
-Maintainers review changes in pull requests and publish version tags for approved releases. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
+Maintainers review changes in pull requests and publish version tags for approved releases. Released tags never move. See [Releases](_engineering/releasing.md) for how versions are chosen and published. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
 ## License and sources
 
