@@ -1,53 +1,31 @@
-<h1 align="center">Fabrica public rules</h1>
+# Fabrica Public Library
 
-<h3 align="center">Engineering rules your coding agents can actually&nbsp;follow.</h3>
+A collection of public engineering rules for [Fabrica Code Rules](https://github.com/fabricahq/code-rules), covering testing, code design, TypeScript, React, TanStack, Zustand, Playwright, and Go.
 
-<p align="center">
-  119 rules for testing, code design, TypeScript, React, TanStack, Zustand, Playwright, and Go.
-  Each one says what to do, when it applies, and how a reviewer can tell it was&nbsp;followed.
-</p>
+Import the groups that fit your project, and Code Rules keeps them versioned and ready for your coding agents to read. New to Code Rules? Start with [What is Code Rules?](https://code-rules.fabricahq.com/start-here/overview/) and [Library](https://code-rules.fabricahq.com/concepts/libraries/).
 
-<p align="center">
-  <a href="LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
-  <a href="https://github.com/fabricahq/code-rules"><img alt="A Code Rules library" src="https://img.shields.io/badge/Code%20Rules-library-6f42c1"></a>
-  <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
-</p>
+## Groups
 
-<p align="center">
-  <a href="#use-these-rules">Use these rules</a> ·
-  <a href="#browse-the-rules">Browse the rules</a> ·
-  <a href="#whats-in-a-rule">What's in a rule</a> ·
-  <a href="https://github.com/fabricahq/code-rules">Code Rules</a>
-</p>
-
----
-
-Agents write code fast, but left alone they skip regression tests, silence the type checker, await independent requests one at a time, and re-render more than they need to. A one-line rule like _"always write tests"_ doesn't fix that: agents apply it everywhere or nowhere.
-
-The rules in this library are written to hold up during both implementation and review. Every rule states one obligation, the situations it covers, the exceptions where it doesn't apply, a correct and incorrect example for each case, and the evidence a reviewer should look for. They're built to be imported with [Code Rules](https://github.com/fabricahq/code-rules), the package manager for engineering rules, but each one is plain Markdown you can read on its own.
-
-## What's inside
-
-| Group | Rules | What it helps with |
+| Group | Rules | Description |
 | --- | --: | --- |
-| [Testing](practices/testing/) | 8 | Choose tests by risk, test at the lowest layer, keep tests independent, reproduce bugs before fixing them, cover boundary cases, and name and run tests well |
-| [Code design](practices/code-design/) | 3 | Express operations as meaningful steps, separate pure computation from effects, and organize code by feature |
-| [Performance](practices/performance/) | 1 | Remove repeated work from measured hot paths |
-| [TypeScript](techs/typescript/) | 19 | Model data, preserve contracts, and keep code understandable |
-| [JavaScript](techs/javascript/) | 7 | Coordinate async work, use browser APIs efficiently, and keep paths analyzable |
-| [React](techs/react/) | 39 | Structure components, manage state, and avoid unnecessary work, including server-rendered React |
-| [TanStack Query](techs/tanstack-query/) | 15 | Manage query keys, caching, mutations, and hydration |
-| [TanStack Router](techs/tanstack-router/) | 10 | Structure routes, validate inputs, and coordinate data loading |
-| [Zustand](techs/zustand/) | 10 | Design stores, subscriptions, and persistence |
-| [Playwright](techs/playwright/) | 2 | Synchronize with retrying assertions and use scoped, user-facing locators |
-| [Go](techs/go/) | 4 | Document fields and packages, and give errors context and deliberate contracts |
-| [goose](techs/goose/) | 1 | Keep SQL migrations discoverable |
+| [Testing](practices/testing/) | 8 | Where to spend testing effort, and how to write tests that stay reliable |
+| [Code design](practices/code-design/) | 3 | Structuring functions, modules, and folders so code stays readable |
+| [Performance](practices/performance/) | 1 | Making code faster where measurement shows it matters |
+| [TypeScript](techs/typescript/) | 19 | Writing type-safe, maintainable TypeScript |
+| [JavaScript](techs/javascript/) | 7 | Async work, browser APIs, and build-friendly code in JavaScript and TypeScript |
+| [React](techs/react/) | 39 | Building correct, accessible, and fast React interfaces, on the client and server |
+| [TanStack Query](techs/tanstack-query/) | 15 | Fetching, caching, and updating server data with TanStack Query |
+| [TanStack Router](techs/tanstack-router/) | 10 | Typed routing, data loading, and navigation with TanStack Router |
+| [Zustand](techs/zustand/) | 10 | Managing shared client state with Zustand |
+| [Playwright](techs/playwright/) | 2 | Writing stable browser tests with Playwright |
+| [Go](techs/go/) | 4 | Writing well-documented Go with useful errors |
+| [Goose](techs/goose/) | 1 | Organizing SQL migrations managed by goose |
 
-**Practice groups** (`practices/`) apply in any language; their TypeScript examples illustrate the ideas. **Technology groups** (`techs/`) cover one language, framework, or tool. Import only the groups your project uses, and exclude or replace any single rule.
+Practice groups (`practices/`) apply in any language. Technology groups (`techs/`) cover one language, framework, or tool.
 
-## Use these rules
+## Use the library
 
-**1. Install [Code Rules](https://code-rules.fabricahq.com/start-here/install/)**, then import the groups you want from your project's root:
+[Install Code Rules](https://code-rules.fabricahq.com/start-here/install/), then import the groups you want from your project's root:
 
 ```sh
 code-rules project init
@@ -62,71 +40,13 @@ code-rules project sync
 > [!NOTE]
 > `v0.1.0` hasn't been tagged yet. Until it is, pass a full commit SHA from `main` to `--ref` instead.
 
-Use `--groups 'practices/*'`, `--groups 'techs/*'`, or `--groups '*'` to take a whole category at once.
+Repeat `--groups` for each group you want, or use `'practices/*'`, `'techs/*'`, or `'*'`. To connect the rules to your agent, follow [Set up your first project](https://code-rules.fabricahq.com/start-here/set-up-project/). To leave out or replace individual rules, see [Import rules](https://code-rules.fabricahq.com/guides/select-rules/).
 
-**2. Point your agent at the result.** Sync writes `.code-rules/generated/RULES.md`, an index that tells your agent which groups to open for each task:
+## How the rules are written
 
-```md
-### Testing
+Every rule follows the Code Rules [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/): one obligation, stated first, with implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md). The testing rules also share a [testing philosophy](assets/testing-philosophy.md), based on Yevgeniy Brikman's talk _Agility Requires Safety_.
 
-**Description:** Spend test effort where bugs are likely and costly, prove each behavior at the lowest
-layer that can, keep tests independent and focused on observable behavior, cover regressions and
-boundary cases, and name and run tests for clear feedback.
-
-**When to read this group:** When adding or changing behavior, fixing a bug, or writing, running,
-and reviewing tests.
-
-**Open group:** [Testing](groups/practices/testing.md)
-```
-
-Add the [project instructions snippet](https://code-rules.fabricahq.com/start-here/set-up-project/#5-give-the-rules-to-your-agent) to your `AGENTS.md` or `CLAUDE.md`, and commit `.code-rules/`. Every agent working in the repository now reads the same rules, pinned to the same commit, with the license and attribution of each rule preserved.
-
-**3. Make it yours.** Disagree with a rule? [Exclude it or replace it](https://code-rules.fabricahq.com/guides/select-rules/) with your own version in `.code-rules/config.yaml`, with a recorded reason. Everything else keeps receiving upstream improvements when you sync.
-
-## What's in a rule
-
-Here's an abridged version of [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md):
-
-```md
----
-title: "Reproduce bugs with regression tests"
-whenToRead: "Before planning, diagnosing, fixing, or reviewing the fix for a behavior defect, ..."
-impact: "HIGH"
-impactDescription: "Prevents a fixed bug from returning unnoticed in a later change."
----
-
-## Reproduce bugs with regression tests
-
-Before fixing a behavior defect, write a test that reproduces the reported failure and confirm that it fails.
-Then apply the fix, confirm that the test passes, and keep the test with the change.
-
-### Implementation
-...
-A change with no behavior to observe, such as correcting a typo in a comment, needs no regression test.
-
-### Rationale
-A test written after a fix may never have been able to fail. ...
-
-### Examples
-#### Application: A logic bug a unit test can reproduce
-**Incorrect (counterexample):** Fix the comparison, then add a test containing only lowercase names.
-The test would have passed before the fix, so it does not guard the bug.
-**Correct:** Before fixing, sort `alpha`, `Beta`, and `gamma` ... confirm that the test fails ...
-
-### Validation
-Look for evidence that the test failed for the original symptom before the fix and passes after it. ...
-```
-
-Every rule in the library follows the same shape:
-
-- **One obligation, stated first.** No rule bundles several expectations, so you can adopt or drop each one independently.
-- **A reading cue.** `whenToRead` tells an agent when to open the rule, so a 119-rule library doesn't flood every task's context.
-- **Boundaries and exceptions.** Rules say where they stop applying, so agents don't overapply them.
-- **Incorrect and correct examples** for each distinct situation the rule covers.
-- **Validation guidance** that tells a reviewing agent what counts as evidence of a violation, and what doesn't.
-- **Attribution** in the metadata of every rule adapted from another source.
-
-Rules are written and reviewed against the Code Rules [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/). The testing rules also share a [testing philosophy](assets/testing-philosophy.md), based on Yevgeniy Brikman's talk _Agility Requires Safety_, which explains the reasoning behind them.
+These rules are opinions. Style preferences and performance techniques are choices to evaluate for your project, not universal requirements, and some rules apply only in particular contexts, such as Next.js. Each rule's reading cue and exceptions say when it applies.
 
 ## Browse the rules
 
@@ -321,12 +241,6 @@ Rules are written and reviewed against the Code Rules [authoring rubric](https:/
 
 </details>
 
-## Keep in mind
-
-- **These are opinions.** Style preferences and performance techniques are choices to evaluate for your project, not universal requirements. Some rules apply only in particular contexts, such as React rules for Next.js or specific React APIs; each rule's reading cue and exceptions say when.
-- **Rules guide agents; they don't enforce anything.** Ask your agent to read the relevant rules before implementing and to use them during review, alongside your tests, linters, and other checks.
-- **Pin a version.** Import a tag or a full commit so your project adopts rule changes deliberately. Released tags never move.
-
 ## Contributing
 
 Pull requests are welcome. Describe the problem the change addresses, keep each rule focused on one expectation, and follow the [authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/). Before opening a pull request, validate the library from its root:
@@ -341,7 +255,7 @@ This checks the library's format, not the quality of its guidance, so review the
 - **Credit your sources.** Rules adapted from others' work need `attribution` metadata and any required notices in [NOTICE.md](NOTICE.md).
 - **Commit source rules only.** Code Rules generates agent guidance in each consuming project.
 
-Maintainers review changes in pull requests and publish version tags for approved releases. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
+Maintainers review changes in pull requests and publish version tags for approved releases. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
 ## License and sources
 
