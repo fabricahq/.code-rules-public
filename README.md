@@ -43,14 +43,12 @@ Code Rules is a package manager for engineering practices. When you configure a 
      --groups techs/tanstack-router \
      --groups techs/typescript \
      --groups techs/zustand \
-     --ref v0.1.0
+     --ref v1.0.0
    ```
 
    To take every group, including ones added in future versions, pass a single wildcard instead: `--groups '*'` for everything, `--groups 'practices/*'` for all practice groups, or `--groups 'techs/*'` for all technology groups. Quote the wildcard so your shell doesn't expand it. See [Select groups from each source](https://code-rules.fabricahq.com/guides/select-rules/#select-groups-from-each-source).
 
    You can also leave out individual rules from a group you import. See [Exclude a rule](https://code-rules.fabricahq.com/guides/select-rules/#exclude-a-rule).
-
-   > **Note:** `v0.1.0` hasn't been tagged yet. Until it is, replace `v0.1.0` with a full commit SHA from `main`.
 
 4. Download the rules and build the guidance your agent reads:
 
