@@ -6,7 +6,7 @@
   <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
 </p>
 
-Fabrica Public Rules Library is a collection of 119 engineering rules that tell coding agents how to write and review production-grade code. Each rule covers one practice, such as reproducing a bug with a test before fixing it, or narrowing unknown values in TypeScript, with examples of what to do, what to avoid, and what a reviewer should check.
+Fabrica Public Rules Library is a collection of engineering rules that tell coding agents how to write and review production-grade code. Each rule covers one practice, such as reproducing a bug with a test before fixing it, or narrowing unknown values in TypeScript, with examples of what to do, what to avoid, and what a reviewer should check.
 
 The rules are organized into groups. Practice groups (`practices/`) apply in any language, and technology groups (`techs/`) cover one language, framework, or tool. You choose the groups that match your stack, and you can leave out any rule you disagree with.
 
