@@ -1,6 +1,14 @@
+- Open with one or two sentences on what the release means for importers: what they gain, and whether they must change their configuration. Name any breaking change here too.
+- Organize changes under these headings, in the order the policy gives, leaving out any with nothing to say:
+  - `## 🗂️ New Groups`: for each group, its ID, what it covers, who should import it, and how many rules it has.
+  - `## ✨ New Rules`: for each rule, its ID and what it tells agents to do.
+  - `## ⬆️ Rule Improvements`: for each rule, what it now covers or explains better. Leave out edits that don't change what an agent would do.
+  - `## 🐛 Rule Fixes`: for each rule, what it previously told agents to do and the corrected guidance.
+  - `## ⚠️ Deprecations`: each deprecated rule or group ID, what replaces it, and the release that will remove or rename it, if known.
+  - `## 🔌 Compatibility`: what changed in `rule-library.yaml` or in the Code Rules versions that can read the library.
+  - `## ⛓️‍💥 Breaking Changes`: every removed or renamed rule and group ID, its replacement if there is one, and the exact `groups`, `exclude`, or `replace` entries importers must update. For a reversed obligation, show what compliant code looked like before and what it looks like now.
 - Name every rule or group an entry covers by its ID, such as `techs/react/server-auth-actions` or `practices/testing`, and link to it at the new tag, such as `https://github.com/fabricahq/public-rules/blob/v1.2.0/techs/react/server-auth-actions.md`. When an entry covers many rules in one group, name the group and link to its directory instead.
-- Under New Features, say for each new group what it covers and how many rules it has, and for each new rule what it tells agents to do.
-- Under Improvements, say what each rule now covers or explains better. Leave out edits that don't change what an agent would do.
-- Under Squashed Bugs, name the rule, what it previously told agents to do, and the corrected guidance.
-- Under Breaking Changes, list every removed or renamed rule and group ID, its replacement if there is one, and the exact `groups`, `exclude`, or `replace` entries importers must update. For a reversed obligation, show what compliant code looked like before and what it looks like now.
+- Give a significant change a `###` heading and a sentence on why it matters. Use bullets for small changes and before-and-after examples where they help.
+- End every entry with the pull requests it covers, such as `(#7)`, or `(#7, #9)` when an entry combines several. GitHub links these numbers on the release page.
 - When a release changes the number of rules or groups, give the new totals, matching the README.
+- Under `## Pull Requests`, keep each entry as `draft` wrote it, such as `- Add React server action rules by @octocat in #7`, in merge order.

@@ -29,7 +29,7 @@ validate:
 # Print the default style with: release-planner guide --default-style
 release-notes-style:
   file: .release-planner/release-notes-style.md
-  mode: append
+  mode: replace
 
 # Where release notes live, and the branch whose notes changes publish releases.
 # notes-dir: releases
