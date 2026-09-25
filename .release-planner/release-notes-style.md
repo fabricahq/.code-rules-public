@@ -1,4 +1,5 @@
-- Open with one or two sentences on what the release means for importers: what they gain, and whether they must change their configuration. Name any breaking change here too.
+- Start with the first heading. Don't put a summary or introduction above it.
+- Describe only what importers would notice or care about: what their agents will now do differently, and what they have to change in their configuration. Leave out how the library was edited, such as formatting, file moves, and tooling, unless it changes what importers get.
 - Organize changes under these headings, in the order the policy gives, leaving out any with nothing to say:
   - `## 🗂️ New Groups`: for each group, its ID, what it covers, who should import it, and how many rules it has.
   - `## ✨ New Rules`: for each rule, its ID and what it tells agents to do.
@@ -11,4 +12,6 @@
 - Give a significant change a `###` heading and a sentence on why it matters. Use bullets for small changes and before-and-after examples where they help.
 - End every entry with the pull requests it covers, such as `(#7)`, or `(#7, #9)` when an entry combines several. GitHub links these numbers on the release page.
 - When a release changes the number of rules or groups, give the new totals, matching the README.
-- Under `## What's Changed`, keep each entry as `draft` wrote it, in merge order.
+- Give upgrade instructions only for breaking changes, and focus them on the exact entries importers must update.
+- Under `## Pull Requests`, keep each entry as inventory wrote it, in merge order, as one list without `###` groups.
+- Follow `## Pull Requests` with `## New Contributors` when inventory lists any, then inventory's closing line.

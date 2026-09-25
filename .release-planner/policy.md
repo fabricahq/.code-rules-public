@@ -49,7 +49,7 @@ The notes present changes in these sections, in this order, leaving out any with
 6. Compatibility: non-breaking changes to `rule-library.yaml`, or to the Code Rules versions that can read the library.
 7. Breaking changes: removed or renamed rules and groups, reversed obligations, and library changes that older Code Rules versions can't read.
 
-Breaking changes come last, but the opening sentences must also name them so that no reader misses them. A deprecation should precede the major release that removes or renames what it deprecates whenever possible.
+Breaking changes come last. A deprecation should precede the major release that removes or renames what it deprecates whenever possible.
 
 ## Always and never
 
@@ -57,5 +57,5 @@ Breaking changes come last, but the opening sentences must also name them so tha
 - Always credit external contributors by GitHub handle.
 - Always credit third-party sources when a release adds rules adapted from them, and keep [NOTICE.md](../NOTICE.md) accurate.
 - For the first release, describe the library as it stands, not the sequence of commits that built it.
-- Never list README, CI, or release tooling changes under the sections above. They belong only in What's Changed, or in the pull request's inventory.
+- Never list README, CI, or release tooling changes under the sections above. They belong only in Pull Requests.
 - Never include rule changes in a release pull request. Merge them in their own pull requests first, then release.
