@@ -1,13 +1,13 @@
-# release-planner:generated v0.1.0 sha256:52a967267284d301. Do not edit; change .release-planner/config.yml and run release-planner install.
+# release-planner:generated v0.3.2 sha256:df55194c2e094d9f. Do not edit; change .release-planner/config.yml and run release-planner install.
 name: Release
 # Notes changes in a PR are validated; a notes change on main approves publication,
 # so ordinary changes never create releases.
 on:
   push:
     branches: ['main']
-    paths: ['releases/v*.md']
+    paths: ['_releases/v*.md']
   pull_request:
-    paths: ['releases/**', '.release-planner/**', '.github/workflows/release-planner.yml']
+    paths: ['_releases/**', '.release-planner/**', '.github/workflows/release-planner.yml']
   # Retry a failed publication with both endpoints of the original approved push.
   workflow_dispatch:
     inputs:
@@ -22,15 +22,19 @@ on:
 permissions:
   contents: read
 env:
-  RELEASE_PLANNER_VERSION: v0.1.0
+  RELEASE_PLANNER_VERSION: v0.3.2
 jobs:
-  # Check the generated files, then bind the notes change to one version and commit.
-  plan:
+  # Check the generated files, then validate the notes change and bind it to one version and
+  # commit. Release notes rules that the notes break are warnings, not failures.
+  validate:
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # to check the release environment's settings
     outputs:
-      tag: ${{ steps.plan.outputs.tag }}
-      commit: ${{ steps.plan.outputs.commit }}
+      tag: ${{ steps.validate.outputs.tag }}
+      commit: ${{ steps.validate.outputs.commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,7 +42,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ inputs.commit || github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Install Release Planner v0.1.0
+      - name: Install Release Planner v0.3.2
         env:
           GH_TOKEN: ${{ github.token }}
         # Verify the build attestation of the checksum manifest, then the archive against it.
@@ -53,13 +57,14 @@ jobs:
           echo "$dir" >> "$GITHUB_PATH"
       - name: Check the generated release files
         run: release-planner check
-      - name: Plan the release
-        id: plan
+      - name: Validate the release request
+        id: validate
         env:
           EVENT: ${{ github.event_name }}
           BASE: ${{ inputs.base || github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ inputs.commit || github.event.pull_request.head.sha || github.sha }}
-        run: release-planner plan --ci --event "$EVENT" --base "$BASE" --head "$HEAD" --out "$RUNNER_TEMP/release-plan.json"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: release-planner validate --ci --event "$EVENT" --base "$BASE" --head "$HEAD" --out "$RUNNER_TEMP/release-plan.json"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-plan
@@ -67,14 +72,14 @@ jobs:
           if-no-files-found: error
 
   # Run this repository's release-only checks on the exact commit being released.
-  validate:
-    needs: plan
-    if: needs.plan.outputs.tag != ''
+  release-checks:
+    needs: validate
+    if: needs.validate.outputs.tag != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.plan.outputs.commit }}
+          ref: ${{ needs.validate.outputs.commit }}
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -84,10 +89,10 @@ jobs:
           go install github.com/fabricahq/code-rules/cmd/code-rules@v0.0.0-20260923222800-f46216a11d67
           "$(go env GOPATH)/bin/code-rules" library check
 
-  # The only job that can write. It runs the pinned Release Planner release and no repository code.
+  # The only job that can write. It runs the pinned Release Planner version and no repository code.
   publish:
-    needs: [plan, validate]
-    if: needs.plan.outputs.tag != '' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [validate, release-checks]
+    if: needs.validate.outputs.tag != '' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -98,7 +103,7 @@ jobs:
       group: release-publication
       cancel-in-progress: false
     steps:
-      - name: Install Release Planner v0.1.0
+      - name: Install Release Planner v0.3.2
         env:
           GH_TOKEN: ${{ github.token }}
         # Verify the build attestation of the checksum manifest, then the archive against it.
@@ -118,5 +123,5 @@ jobs:
       - name: Tag the approved commit and publish the approved notes
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          COMMIT: ${{ needs.plan.outputs.commit }}
+          COMMIT: ${{ needs.validate.outputs.commit }}
         run: release-planner publish --plan "$RUNNER_TEMP/plan/release-plan.json" --commit "$COMMIT" --branch main
