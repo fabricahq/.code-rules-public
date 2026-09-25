@@ -22,9 +22,9 @@ These are not breaking:
 
 Versions follow [SemVer 2.0.0](https://semver.org/), with tags such as `v1.2.3`. The first release is v1.0.0. Use a suffix such as `v1.1.0-rc.1` for a prerelease.
 
-- **Major:** remove or rename a group or rule, reverse or substantially change what a rule obliges, or any other breaking change above.
-- **Minor:** add rules or groups, or extend an existing rule to situations it didn't cover before.
-- **Patch:** corrections, clearer wording, better examples, metadata, and attribution fixes that don't change what compliant code looks like.
+- **Major:** any breaking change above, such as removing or renaming a group or rule, or reversing or substantially changing what a rule obliges.
+- **Minor:** a new group, a new rule in an existing group, a rule extended to situations it didn't cover before, or a deprecation.
+- **Patch:** clearer wording, better examples, metadata, attribution, and corrections that don't change what compliant code looks like.
 
 When one change could fit two levels, such as a correction that also narrows what a rule allows, choose the higher level and explain why in the pull request. Don't invent compatibility guarantees: if you can't tell whether code that followed the old rule still follows the new one, say so and ask.
 
@@ -39,14 +39,17 @@ They know Code Rules and their own stack. They don't know the history of this re
 
 ## Order of the release notes
 
-The notes present changes in this order, leaving out any with nothing to say:
+The notes present changes in these sections, in this order, leaving out any with nothing to say:
 
-1. New features: new rules and groups
-2. Improvements: clearer guidance, better examples, and broader coverage in existing rules
-3. Bug fixes: corrected rules
-4. Breaking changes: removed or renamed rules and groups, and reversed obligations
+1. New groups: groups added to the library. Importers who select groups with a wildcard receive them automatically.
+2. New rules: rules added to existing groups. Importers who select a group receive its new rules automatically.
+3. Rule improvements: clearer guidance, better examples, broader coverage, and metadata changes such as `whenToRead` that change when agents load a rule.
+4. Rule fixes: rules that told agents something wrong, with the previous and corrected guidance.
+5. Deprecations: rules and groups that a later major version will remove or rename, and what to use instead.
+6. Compatibility: non-breaking changes to `rule-library.yaml`, or to the Code Rules versions that can read the library.
+7. Breaking changes: removed or renamed rules and groups, reversed obligations, and library changes that older Code Rules versions can't read.
 
-Breaking changes come last, but the opening sentences must also name them so that no reader misses them.
+Breaking changes come last, but the opening sentences must also name them so that no reader misses them. A deprecation should precede the major release that removes or renames what it deprecates whenever possible.
 
 ## Always and never
 
@@ -54,5 +57,5 @@ Breaking changes come last, but the opening sentences must also name them so tha
 - Always credit external contributors by GitHub handle.
 - Always credit third-party sources when a release adds rules adapted from them, and keep [NOTICE.md](../NOTICE.md) accurate.
 - For the first release, describe the library as it stands, not the sequence of commits that built it.
-- Never list README, CI, or release tooling changes under the feature headings. They belong only in What's Changed, or in the pull request's inventory.
+- Never list README, CI, or release tooling changes under the sections above. They belong only in the Pull Requests list, or in the pull request's inventory.
 - Never include rule changes in a release pull request. Merge them in their own pull requests first, then release.
