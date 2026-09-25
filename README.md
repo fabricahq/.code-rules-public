@@ -3,7 +3,7 @@
 <p>
   <a href="LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
   <a href="https://github.com/fabricahq/code-rules"><img alt="A Code Rules library" src="https://img.shields.io/badge/Code%20Rules-library-6f42c1"></a>
-  <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
+  <img alt="13 groups, 124 rules" src="https://img.shields.io/badge/rules-124-brightgreen">
 </p>
 
 ## What is Fabrica Public Rules Library?
@@ -33,6 +33,7 @@ Code Rules is a package manager for engineering practices. When you configure a 
      --repository https://github.com/fabricahq/public-rules.git \
      --groups practices/code-design \
      --groups practices/performance \
+     --groups practices/readmes \
      --groups practices/testing \
      --groups techs/go \
      --groups techs/goose \
@@ -103,6 +104,7 @@ Some rules adapt material from third parties, and others draw on official docume
 | [Testing](practices/testing/) | 8 | Where to spend testing effort, and how to write tests that stay reliable |
 | [Code design](practices/code-design/) | 3 | Structuring functions, modules, and folders so code stays readable |
 | [Performance](practices/performance/) | 1 | Making code faster where measurement shows it matters |
+| [READMEs](practices/readmes/) | 5 | Writing READMEs that say what a product is, get users to a first result, and fit the product's tier |
 | [TypeScript](techs/typescript/) | 19 | Writing type-safe, maintainable TypeScript |
 | [JavaScript](techs/javascript/) | 7 | Async work, browser APIs, and build-friendly code in JavaScript and TypeScript |
 | [React](techs/react/) | 39 | Building correct, accessible, and fast React interfaces, on the client and server |
@@ -115,7 +117,7 @@ Some rules adapt material from third parties, and others draw on official docume
 
 Practice groups (`practices/`) apply in any language. Technology groups (`techs/`) cover one language, framework, or tool.
 
-### Browse all 119 rules
+### Browse all 124 rules
 
 <details>
 <summary><strong>Testing</strong> · 8 rules</summary>
@@ -144,6 +146,17 @@ Practice groups (`practices/`) apply in any language. Technology groups (`techs/
 <summary><strong>Performance</strong> · 1 rule</summary>
 
 - [Optimize measured hot paths by removing repeated work](practices/performance/optimize-measured-hot-paths.md)
+
+</details>
+
+<details>
+<summary><strong>READMEs</strong> · 5 rules</summary>
+
+- [Give a quick start that runs as written](practices/readmes/give-a-quick-start-that-runs-as-written.md)
+- [Keep the README an entry point, and link to the full documentation](practices/readmes/keep-the-readme-an-entry-point.md)
+- [Match the README's presentation to the product's tier](practices/readmes/match-presentation-to-product-tier.md)
+- [Say what the product is before anything else](practices/readmes/say-what-it-is-first.md)
+- [State what the product does not do](practices/readmes/state-what-the-product-does-not-do.md)
 
 </details>
 
