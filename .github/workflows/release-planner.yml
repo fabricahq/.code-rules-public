@@ -1,13 +1,13 @@
-# release-planner:generated v0.1.0 sha256:52a967267284d301. Do not edit; change .release-planner/config.yml and run release-planner install.
+# release-planner:generated v0.1.0 sha256:2ee705c64e3db7e6. Do not edit; change .release-planner/config.yml and run release-planner install.
 name: Release
 # Notes changes in a PR are validated; a notes change on main approves publication,
 # so ordinary changes never create releases.
 on:
   push:
     branches: ['main']
-    paths: ['releases/v*.md']
+    paths: ['_releases/v*.md']
   pull_request:
-    paths: ['releases/**', '.release-planner/**', '.github/workflows/release-planner.yml']
+    paths: ['_releases/**', '.release-planner/**', '.github/workflows/release-planner.yml']
   # Retry a failed publication with both endpoints of the original approved push.
   workflow_dispatch:
     inputs:
