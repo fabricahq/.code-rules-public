@@ -57,5 +57,5 @@ Breaking changes come last, but the opening sentences must also name them so tha
 - Always credit external contributors by GitHub handle.
 - Always credit third-party sources when a release adds rules adapted from them, and keep [NOTICE.md](../NOTICE.md) accurate.
 - For the first release, describe the library as it stands, not the sequence of commits that built it.
-- Never list README, CI, or release tooling changes under the sections above. They belong only in the Pull Requests list, or in the pull request's inventory.
+- Never list README, CI, or release tooling changes under the sections above. They belong only in What's Changed, or in the pull request's inventory.
 - Never include rule changes in a release pull request. Merge them in their own pull requests first, then release.

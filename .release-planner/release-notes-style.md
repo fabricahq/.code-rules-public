@@ -11,4 +11,4 @@
 - Give a significant change a `###` heading and a sentence on why it matters. Use bullets for small changes and before-and-after examples where they help.
 - End every entry with the pull requests it covers, such as `(#7)`, or `(#7, #9)` when an entry combines several. GitHub links these numbers on the release page.
 - When a release changes the number of rules or groups, give the new totals, matching the README.
-- Under `## Pull Requests`, keep each entry as `draft` wrote it, such as `- Add React server action rules by @octocat in #7`, in merge order.
+- Under `## What's Changed`, keep each entry as `draft` wrote it, in merge order.
