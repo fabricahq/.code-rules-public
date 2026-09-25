@@ -33,15 +33,18 @@ The product's owner decides its tier; the README follows that decision.
 
 #### Secondary: plain information
 
-- Open with a plain `#` title and one short paragraph that says what the product is, what it works with, and who it is for.
+- Open with a plain `#` title and one or two short paragraphs: what the product does for the reader, then who it is for and what it requires.
   Link the primary product it serves, if any.
 - Keep badges to status facts, such as license and build.
   Leave out the centered title block, the tagline heading, the navigation row, and comparison tables.
 - Use plain descriptive or question headings, such as "How it works" or "How do I set it up?"
-- Describe behavior in neutral terms.
-  Replace claims such as "powerful" or "effortless" with what the product does.
+- Write plainly and warmly, without hype.
+  Speak to the reader's benefit in concrete terms, and replace claims such as "powerful" or "effortless" with what the product does.
+- If you include a "Why use it?" section, start from what the reader is trying to get done.
+  Then say how the product divides the work: what it automates, what it checks, and what it leaves to the reader.
+  Keep comparisons with alternatives out of this section; state them fairly with the product's limits.
 
-Both tiers carry the same substance: what the product is, a quick start, its limits, and links to the full documentation.
+Both tiers carry the same substance: what the product does for the reader, a quick start, its limits, and links to the full documentation.
 Only the presentation and length differ.
 
 ### Rationale
@@ -79,7 +82,8 @@ The title block competes with Acme Lint's own README, and the pitch never says w
 ```md
 # lint-bridge
 
-lint-bridge runs [Acme Lint](https://example.com/acme-lint) in GitHub Actions and posts its findings as pull request review comments.
+lint-bridge puts [Acme Lint](https://example.com/acme-lint)'s findings where you already review code: it runs Acme Lint in GitHub Actions and posts each finding as a comment on the pull request.
+
 It is for teams that already run Acme Lint locally.
 
 ## How do I set it up?
@@ -122,7 +126,7 @@ Finance sees one bill. Engineering sees hundreds of services. Nobody can say whi
 - Find the tier the owner stated.
   If none was stated, check that the change says which tier it assumed.
 - For a primary README, check that the first screen has the tagline, the promise, and the links row, and that the problem statement comes before the quick start.
-- For a secondary README, check for a plain `#` title, a one-paragraph description, and no centered title block, navigation row, comparison table, or promotional adjectives.
+- For a secondary README, check for a plain `#` title, an opening of one or two short paragraphs, and no centered title block, navigation row, comparison table, or promotional adjectives.
 
 A secondary README with a license badge and a build badge is not a violation.
 Neither is a primary README without an image, or a primary README that is short.

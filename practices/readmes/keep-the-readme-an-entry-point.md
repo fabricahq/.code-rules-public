@@ -16,6 +16,7 @@ Put complete reference material in the documentation, and maintainer instruction
 - **Keep in the README:** what the product is, the problem it solves, the quick start, a short summary of how it works, its limits, links into the documentation, a one- or two-sentence contributing pointer, and the license.
 - **Move to the documentation:** every configuration key, every command and flag, full file formats, customization guides, troubleshooting, and FAQs beyond a few essential ones.
 - **Move to `CONTRIBUTING.md`:** building from source, running tests and linters, the repository layout, and the release process.
+  Create the file if the repository does not have one.
 - Link each topic to its page on the published documentation site, rather than to the source folder of the site.
 - Before removing a section from the README, confirm that the page it points to already covers everything the section said.
   Move anything missing to that page first, and update links elsewhere in the repository that point to the removed section.

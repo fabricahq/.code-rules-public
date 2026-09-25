@@ -16,6 +16,8 @@ Every command in it must run as written against the current release, and every o
 - Place the quick start soon after the description, and after the problem statement for a primary product.
 - Number the steps.
   Give each step one action and the command to paste.
+- Describe each step by what it does, in terms the reader already knows.
+  Name a generated file or component by what it is and does, such as "the GitHub Actions workflow that publishes releases", rather than by a name the reader has not met yet, such as "the Release workflow".
 - Stop at the first real result: the smallest use that shows the product working.
   Link to the full setup guide for everything after that, such as options, permissions, and continuous integration.
 - Make commands paste cleanly.
@@ -74,5 +76,7 @@ The output is copied from a run against v0.4.0.
 Run each command in a fresh environment, such as a new temporary directory or clean checkout, using the current release.
 Compare the output with what the README shows.
 Check every version number in the README against the latest release tag.
+Read each step's description without its command, and check that it names what the step produces in terms a new reader knows.
+When the first real result depends on a service you cannot use during the check, such as a hosted account, run every step you can and say which steps you could not run.
 
 A pinned version is not a violation when the step's purpose is pinning and the version matches the current release.

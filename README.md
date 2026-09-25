@@ -104,7 +104,7 @@ Some rules adapt material from third parties, and others draw on official docume
 | [Testing](practices/testing/) | 8 | Where to spend testing effort, and how to write tests that stay reliable |
 | [Code design](practices/code-design/) | 3 | Structuring functions, modules, and folders so code stays readable |
 | [Performance](practices/performance/) | 1 | Making code faster where measurement shows it matters |
-| [READMEs](practices/readmes/) | 5 | Writing READMEs that say what a product is, get users to a first result, and fit the product's tier |
+| [READMEs](practices/readmes/) | 5 | Writing READMEs that say what a product does for the reader, get them to a first result, and fit the product's tier |
 | [TypeScript](techs/typescript/) | 19 | Writing type-safe, maintainable TypeScript |
 | [JavaScript](techs/javascript/) | 7 | Async work, browser APIs, and build-friendly code in JavaScript and TypeScript |
 | [React](techs/react/) | 39 | Building correct, accessible, and fast React interfaces, on the client and server |
@@ -155,7 +155,7 @@ Practice groups (`practices/`) apply in any language. Technology groups (`techs/
 - [Give a quick start that runs as written](practices/readmes/give-a-quick-start-that-runs-as-written.md)
 - [Keep the README an entry point, and link to the full documentation](practices/readmes/keep-the-readme-an-entry-point.md)
 - [Match the README's presentation to the product's tier](practices/readmes/match-presentation-to-product-tier.md)
-- [Say what the product is before anything else](practices/readmes/say-what-it-is-first.md)
+- [Open with what the product does for the reader](practices/readmes/open-with-what-the-product-does.md)
 - [State what the product does not do](practices/readmes/state-what-the-product-does-not-do.md)
 
 </details>
