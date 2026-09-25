@@ -6,7 +6,7 @@
   <img alt="12 groups, 119 rules" src="https://img.shields.io/badge/rules-119-brightgreen">
 </p>
 
-## What is Fabrica Public Rules Library?
+## What is the Fabrica Public Rules Library?
 
 Fabrica Public Rules Library is an open source collection of coding best practices designed for use with [Code Rules](https://github.com/fabricahq/code-rules).
 
