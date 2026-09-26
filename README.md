@@ -252,6 +252,7 @@ It's the same relationship as a package manager and a package. You install Code 
      --repository https://github.com/fabricahq/public-rules.git \
      --groups practices/code-design \
      --groups practices/performance \
+     --groups practices/readmes \
      --groups practices/testing \
      --groups techs/go \
      --groups techs/goose \
@@ -262,7 +263,7 @@ It's the same relationship as a package manager and a package. You install Code 
      --groups techs/tanstack-router \
      --groups techs/typescript \
      --groups techs/zustand \
-     --ref v1.0.0
+     --ref v1.1.0
    ```
 
    To take every group, including ones added in future versions, pass a single wildcard instead: `--groups '*'` for everything, `--groups 'practices/*'` for all practice groups, or `--groups 'techs/*'` for all technology groups. Quote the wildcard so your shell doesn't expand it. See [Select groups from each source](https://code-rules.fabricahq.com/guides/select-rules/#select-groups-from-each-source).
@@ -305,7 +306,10 @@ Be sure to follow the [Code Rules authoring rubric](https://code-rules.fabricahq
 
 ```sh
 code-rules library check
+uv run .github/scripts/check-readme.py
 ```
+
+The second command checks that this README still lists every group and rule. Pull request checks run both.
 
 Maintainers review changes in pull requests. Releases are made with [Release Planner](https://github.com/fabricahq/release-planner): an agent drafts the notes in a release pull request, and merging it tags and publishes the release. The [release policy](.release-planner/policy.md) explains how versions are chosen and what counts as a breaking change. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
 
