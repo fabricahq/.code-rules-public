@@ -16,11 +16,12 @@ first-version: v1.0.0
 # checks they don't run: a smoke test of what you ship, an API compatibility check against
 # the previous release, a fresh vulnerability scan, or a slow end-to-end suite.
 #
-# Pull request checks validate the library and the README's rule lists. The README's
-# install command pins the latest release, so it can only be checked here, on the
-# release commit that adds the new version's notes.
+# Run the pull request checks again on the release commit, so a release never skips
+# them, even if the Check workflow isn't a required status check. On the release commit
+# they also check the README's install command, which pins the latest release and so
+# can't be checked on ordinary pull requests.
 release-checks:
-  run: python3 .github/scripts/check-readme-install.py
+  workflow: check.yml
 
 # Your own release notes style, if you want one: a markdown file, and how it combines with
 # Release Planner's default style. append adds yours after the default; replace uses only yours.

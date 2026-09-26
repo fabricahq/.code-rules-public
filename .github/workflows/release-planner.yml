@@ -1,4 +1,4 @@
-# release-planner:generated v0.3.2 sha256:48b42d6433fd0275. Do not edit; change .release-planner/config.yml and run release-planner install.
+# release-planner:generated v0.3.2 sha256:cb306429f4661fb9. Do not edit; change .release-planner/config.yml and run release-planner install.
 name: Release
 # Notes changes in a PR are validated; a notes change on main approves publication,
 # so ordinary changes never create releases.
@@ -72,18 +72,14 @@ jobs:
           if-no-files-found: error
 
   # Run this repository's release-only checks on the exact commit being released.
+  # The called workflow gets the repository's secrets, but never the release-write token.
   release-checks:
     needs: validate
     if: needs.validate.outputs.tag != ''
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.validate.outputs.commit }}
-          persist-credentials: false
-      - name: Run the release checks
-        run: |
-          python3 .github/scripts/check-readme-install.py
+    uses: ./.github/workflows/check.yml
+    with:
+      ref: ${{ needs.validate.outputs.commit }}
+    secrets: inherit
 
   # The only job that can write. It runs the pinned Release Planner version and no repository code.
   publish:
