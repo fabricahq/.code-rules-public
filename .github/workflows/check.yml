@@ -17,14 +17,22 @@ jobs:
         with:
           persist-credentials: false
       # Use the latest stable release so the library is always checked with the
-      # current CLI. The installer verifies the archive against the release's
-      # SHA256SUMS and checks that the executable runs before installing it.
+      # current CLI. Verify the build attestation of the checksum manifest, then
+      # the archive against it, so no downloaded script runs unverified.
       - name: Install the latest Code Rules release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl -fsSL https://code-rules.fabricahq.com/install.sh |
-            sh -s -- --install-dir "$RUNNER_TEMP/bin" --no-update-path
-          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-          echo "Checked with Code Rules $("$RUNNER_TEMP/bin/code-rules" --version)" >> "$GITHUB_STEP_SUMMARY"
+          dir="$RUNNER_TEMP/code-rules"
+          mkdir -p "$dir" && cd "$dir"
+          gh release download --repo fabricahq/code-rules --pattern SHA256SUMS --pattern 'code-rules_*_linux_amd64.tar.gz'
+          gh attestation verify SHA256SUMS --repo fabricahq/code-rules \
+            --signer-workflow fabricahq/code-rules/.github/workflows/release-planner.yml \
+            --source-ref refs/heads/main
+          sha256sum --check --ignore-missing SHA256SUMS
+          tar -xzf code-rules_*_linux_amd64.tar.gz code-rules
+          echo "$dir" >> "$GITHUB_PATH"
+          echo "Checked with Code Rules $(./code-rules --version)" >> "$GITHUB_STEP_SUMMARY"
       - name: Check the library
         run: code-rules library check
       - name: Check that README.md matches the library
