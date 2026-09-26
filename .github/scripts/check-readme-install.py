@@ -8,9 +8,11 @@ Run from the repository root.
 """
 
 import re
+import shlex
 import sys
 from pathlib import Path
 
+COMMAND = "code-rules project add library"
 GROUP_ROOTS = ("practices", "techs")
 VERSION = re.compile(r"v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?")
 
@@ -33,12 +35,29 @@ def releasing_version():
     return max(versions, key=precedence)
 
 
-def install_command():
-    """Return the README code block that adds this library."""
-    for block in re.findall(r"```sh\n(.*?)```", Path("README.md").read_text(), re.DOTALL):
-        if "code-rules project add library" in block:
-            return block
-    sys.exit("README.md has no `code-rules project add library` command")
+def install_options():
+    """Return the --groups and --ref values of the README's command that adds this library.
+
+    Joins the command's continuation lines and splits it as the shell would, so comments
+    and other commands in the same code block don't count.
+    """
+    lines = Path("README.md").read_text().splitlines()
+    starts = [i for i, line in enumerate(lines) if line.strip().startswith(COMMAND)]
+    if len(starts) != 1:
+        sys.exit(f"README.md must contain exactly one `{COMMAND}` command")
+    index = starts[0]
+    command = lines[index].rstrip()
+    while command.endswith("\\"):
+        index += 1
+        command = command[:-1] + lines[index].rstrip()
+
+    options = {"--groups": [], "--ref": []}
+    words = iter(shlex.split(command, comments=True))
+    for word in words:
+        name, equals, value = word.partition("=")
+        if name in options:
+            options[name].append(value if equals else next(words, ""))
+    return options
 
 
 def main():
@@ -47,13 +66,15 @@ def main():
         print(f"{version.group(0)} is a prerelease; the README keeps pinning a stable release.")
         return
 
-    command = install_command()
+    options = install_options()
     errors = []
-    refs = re.findall(r"--ref (\S+)", command)
-    if refs != [version.group(0)]:
-        errors.append(f"pin --ref {version.group(0)}, not {' '.join(refs) or 'nothing'}")
+    refs = options["--ref"]
+    if not refs:
+        errors.append(f"add --ref {version.group(0)}")
+    elif refs != [version.group(0)]:
+        errors.append(f"pin --ref {version.group(0)}, not {' '.join(refs)}")
 
-    selected = re.findall(r"--groups (\S+)", command)
+    selected = options["--groups"]
     groups = [
         metadata.parent.as_posix()
         for root in GROUP_ROOTS
