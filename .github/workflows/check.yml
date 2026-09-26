@@ -1,5 +1,5 @@
 name: Check
-# Validate the library on every pull request and on main.
+# Validate the library and its README on every pull request and on main.
 on:
   pull_request:
   push:
@@ -32,3 +32,5 @@ jobs:
           fi
       - name: Check the library
         run: code-rules library check
+      - name: Check that README.md matches the library
+        run: python3 .github/scripts/check-readme.py

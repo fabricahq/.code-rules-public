@@ -4,7 +4,14 @@ This repository is a [Code Rules](https://github.com/fabricahq/code-rules) libra
 
 ## Rules
 
-Write and revise rules with the [Code Rules rule rubric and template](https://code-rules.fabricahq.com/reference/rule-authoring/). Run `code-rules library check` from the repository root before you push.
+Write and revise rules with the [Code Rules rule rubric and template](https://code-rules.fabricahq.com/reference/rule-authoring/). When you add, remove, rename, or retitle a rule or group, update the README's rule count badge, group table, and rule lists to match. Before you push, run these from the repository root:
+
+```sh
+code-rules library check
+python3 .github/scripts/check-readme.py
+```
+
+The **Check** workflow runs both on every pull request.
 
 <!-- release-planner:begin v0.3.2 sha256:eab1df264ef5ac2d -->
 ## Releases
