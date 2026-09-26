@@ -9,8 +9,6 @@ permissions:
 concurrency:
   group: check-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-env:
-  CODE_RULES_VERSION: v0.1.0
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -18,18 +16,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The installer verifies the archive against the release's SHA256SUMS and
-      # checks that the executable runs; confirm it installed the pinned version.
-      - name: Install Code Rules
+      # Use the latest stable release so the library is always checked with the
+      # current CLI. The installer verifies the archive against the release's
+      # SHA256SUMS and checks that the executable runs before installing it.
+      - name: Install the latest Code Rules release
         run: |
           curl -fsSL https://code-rules.fabricahq.com/install.sh |
-            sh -s -- --version "$CODE_RULES_VERSION" --install-dir "$RUNNER_TEMP/bin" --no-update-path
+            sh -s -- --install-dir "$RUNNER_TEMP/bin" --no-update-path
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-          installed=$("$RUNNER_TEMP/bin/code-rules" --version)
-          if [ "$installed" != "${CODE_RULES_VERSION#v}" ]; then
-            echo "::error::expected Code Rules ${CODE_RULES_VERSION#v}, got $installed"
-            exit 1
-          fi
+          echo "Checked with Code Rules $("$RUNNER_TEMP/bin/code-rules" --version)" >> "$GITHUB_STEP_SUMMARY"
       - name: Check the library
         run: code-rules library check
       - name: Check that README.md matches the library
