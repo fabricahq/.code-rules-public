@@ -59,3 +59,4 @@ Breaking changes come last. A deprecation should precede the major release that 
 - For the first release, describe the library as it stands, not the sequence of commits that built it.
 - Never list README, CI, or release tooling changes under the sections above. They belong only in Pull Requests.
 - Never include rule changes in a release pull request. Merge them in their own pull requests first, then release.
+- Always update the README's install command in the release pull request: pin `--ref` to the new version and select every group. List that commit under Pull Requests. The release check enforces this. It can't change earlier, because the command must work with the release it pins.
