@@ -1,0 +1,43 @@
+name: Check
+# Validate the library and its README on every pull request and on main.
+on:
+  pull_request:
+  push:
+    branches: ['main']
+permissions:
+  contents: read
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Use the latest stable release so the library is always checked with the
+      # current CLI. Verify the build attestation of the checksum manifest, then
+      # the archive against it, so no downloaded script runs unverified.
+      - name: Install the latest Code Rules release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dir="$RUNNER_TEMP/code-rules"
+          mkdir -p "$dir" && cd "$dir"
+          gh release download --repo fabricahq/code-rules --pattern SHA256SUMS --pattern 'code-rules_*_linux_amd64.tar.gz'
+          gh attestation verify SHA256SUMS --repo fabricahq/code-rules \
+            --signer-workflow fabricahq/code-rules/.github/workflows/release-planner.yml \
+            --source-ref refs/heads/main
+          sha256sum --check --ignore-missing SHA256SUMS
+          tar -xzf code-rules_*_linux_amd64.tar.gz code-rules
+          echo "$dir" >> "$GITHUB_PATH"
+          echo "Checked with Code Rules $(./code-rules --version)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the library
+        run: code-rules library check
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.19'
+          enable-cache: false
+      - name: Check that README.md matches the library
+        run: uv run .github/scripts/check-readme.py
