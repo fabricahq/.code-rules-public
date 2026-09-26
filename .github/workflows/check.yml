@@ -35,5 +35,9 @@ jobs:
           echo "Checked with Code Rules $(./code-rules --version)" >> "$GITHUB_STEP_SUMMARY"
       - name: Check the library
         run: code-rules library check
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.19'
+          enable-cache: false
       - name: Check that README.md matches the library
-        run: python3 .github/scripts/check-readme.py
+        run: uv run .github/scripts/check-readme.py

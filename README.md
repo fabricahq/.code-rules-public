@@ -305,7 +305,7 @@ Be sure to follow the [Code Rules authoring rubric](https://code-rules.fabricahq
 
 ```sh
 code-rules library check
-python3 .github/scripts/check-readme.py
+uv run .github/scripts/check-readme.py
 ```
 
 The second command checks that this README still lists every group and rule. Pull request checks run both.

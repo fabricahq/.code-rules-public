@@ -8,7 +8,7 @@ Write and revise rules with the [Code Rules rule rubric and template](https://co
 
 ```sh
 code-rules library check
-python3 .github/scripts/check-readme.py
+uv run .github/scripts/check-readme.py
 ```
 
 The **Check** workflow runs both on every pull request.

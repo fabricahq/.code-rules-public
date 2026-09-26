@@ -1,16 +1,25 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["pyyaml==6.0.3"]
+# ///
 """Check that README.md lists exactly the groups and rules in the library.
 
 Checks the rule count badge, the group table, and the "Browse all N rules"
 lists against the library files, and the totals against `code-rules library
-check`. Run from the repository root with code-rules on PATH.
+check`. Run from the repository root with code-rules on PATH:
+
+    uv run .github/scripts/check-readme.py
 """
 
 import json
 import re
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
+
+import yaml
 
 GROUP_ROOTS = ("practices", "techs")
 
@@ -21,30 +30,24 @@ def fail(message):
     errors.append(message)
 
 
-def scalar(value):
-    """Parse a one-line YAML scalar, rejecting forms this check does not understand."""
-    value = value.strip()
-    if value.startswith('"'):
-        return json.loads(value)
-    if value.startswith("'") and value.endswith("'"):
-        return value[1:-1].replace("''", "'")
-    if value and value[0] not in "|>[{&*!#":
-        return value
-    raise ValueError(f"unsupported YAML scalar: {value}")
+def field(path, text, key):
+    """Read a string field from one YAML document, as Code Rules does.
 
-
-def field(text, key):
-    match = re.search(rf"^{key}:(.*)$", text, re.MULTILINE)
-    if not match:
-        raise ValueError(f"missing {key}")
-    return scalar(match.group(1))
+    BaseLoader keeps every scalar a string, so values such as `yes` or `1.0`
+    are not converted to other types.
+    """
+    value = yaml.load(text, Loader=yaml.BaseLoader).get(key)
+    if not isinstance(value, str):
+        raise ValueError(f"{path}: {key} must be a string")
+    return value.strip()
 
 
 def frontmatter(path):
     text = path.read_text()
-    if not text.startswith("---\n"):
+    match = re.match(r"---\n(.*?\n)---\n", text, re.DOTALL)
+    if not match:
         raise ValueError(f"{path}: missing frontmatter")
-    return text[4 : text.index("\n---", 3)]
+    return match.group(1)
 
 
 def load_groups():
@@ -58,8 +61,8 @@ def load_groups():
                 relative = rule.relative_to(directory)
                 if relative.parts[0] == "assets" or relative == Path("README.md"):
                     continue
-                rules[rule.as_posix()] = field(frontmatter(rule), "title")
-            groups[directory.as_posix()] = (field(metadata.read_text(), "name"), rules)
+                rules[rule.as_posix()] = field(rule, frontmatter(rule), "title")
+            groups[directory.as_posix()] = (field(metadata, metadata.read_text(), "name"), rules)
     return groups
 
 
@@ -122,10 +125,11 @@ def check_rule_lists(readme, groups, rule_count):
     )
     seen = set()
     for name, summary_count, body in blocks:
-        links = {
-            path: title
-            for title, path in re.findall(r"^- \[(.+)\]\(([^)]+\.md)\)$", body, re.MULTILINE)
-        }
+        items = re.findall(r"^- \[(.+)\]\(([^)]+\.md)\)$", body, re.MULTILINE)
+        links = {path: title for title, path in items}
+        for path, count in sorted(Counter(path for _, path in items).items()):
+            if count > 1:
+                fail(f"rule list {name!r} links to {path} more than once")
         paths = {path.rsplit("/", 1)[0] for path in links} or {""}
         if len(paths) != 1 or next(iter(paths)) not in groups:
             fail(f"rule list {name!r} should link to the rules of exactly one group")
