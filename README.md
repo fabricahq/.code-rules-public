@@ -6,96 +6,9 @@
   <img alt="13 groups, 124 rules" src="https://img.shields.io/badge/rules-124-brightgreen">
 </p>
 
-## What is Fabrica Public Rules Library?
+Fabrica Public Rules Library is a collection of engineering rules that tell coding agents how to write and review production-grade code. Each rule covers one practice, such as reproducing a bug with a test before fixing it, or narrowing unknown values in TypeScript, with examples of what to do, what to avoid, and what a reviewer should check.
 
-Fabrica Public Rules Library is an open source collection of coding best practices designed for use with [Code Rules](https://github.com/fabricahq/code-rules).
-
-## Why use it?
-
-Agents are capable of writing testable, maintainable, well-organized code, but they don’t do it by default. They only do it when you tell them how.
-
-Fabrica Public Rules Library is a collection of rules curated or authored by [Fabrica](https://fabricahq.com) that cover a range of topics from testing to error handling to React to Go and beyond. Collectively, they guide your agent on how to write production-grade code.
-
-## How does it work?
-
-This repo is meant to be used together with [Code Rules](https://github.com/fabricahq/code-rules).
-
-Code Rules is a package manager for engineering practices. When you configure a project to use Code Rules, you add rules you want your agents to follow when writing or validating code. Those rules can either be written for that project alone, or imported from a library, like this repo, Fabrica Public Rules Library.
-
-## How do I use this repo?
-
-1. [Install Code Rules](https://code-rules.fabricahq.com/start-here/install/) on your local computers.
-2. [Set up your project](https://code-rules.fabricahq.com/start-here/set-up-project/) to use Code Rules.
-3. Add this library as a source. Within the project directory, run the command below. It selects every group; delete the `--groups` lines you don't need.
-
-   ```sh
-   code-rules project add library fabrica \
-     --repository https://github.com/fabricahq/public-rules.git \
-     --groups practices/code-design \
-     --groups practices/performance \
-     --groups practices/readmes \
-     --groups practices/testing \
-     --groups techs/go \
-     --groups techs/goose \
-     --groups techs/javascript \
-     --groups techs/playwright \
-     --groups techs/react \
-     --groups techs/tanstack-query \
-     --groups techs/tanstack-router \
-     --groups techs/typescript \
-     --groups techs/zustand \
-     --ref v1.0.0
-   ```
-
-   To take every group, including ones added in future versions, pass a single wildcard instead: `--groups '*'` for everything, `--groups 'practices/*'` for all practice groups, or `--groups 'techs/*'` for all technology groups. Quote the wildcard so your shell doesn't expand it. See [Select groups from each source](https://code-rules.fabricahq.com/guides/select-rules/#select-groups-from-each-source).
-
-   You can also leave out individual rules from a group you import. See [Exclude a rule](https://code-rules.fabricahq.com/guides/select-rules/#exclude-a-rule).
-
-4. Download the rules and build the guidance your agent reads:
-
-   ```sh
-   code-rules project sync
-   ```
-
-5. If you haven't already, [tell your agent to read the rules](https://code-rules.fabricahq.com/start-here/set-up-project/#5-give-the-rules-to-your-agent), then commit the `.code-rules/` directory.
-
-## FAQs
-
-### What does a rule look like?
-
-A rule is a Markdown file. Its YAML frontmatter gives the rule a title, says when an agent should read it, and describes why it matters. Its body states one obligation, then gives implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md).
-
-Every rule in this library follows the Code Rules [rule rubric and template](https://code-rules.fabricahq.com/reference/rule-authoring/).
-
-### Do I have to follow every rule?
-
-No. These rules are opinions on specific technologies and practices. In some cases, you may not be using that technology, or following that practice. In some cases, you may outright disagree with the rule.
-
-Code Rules is designed to allow importing whatever collection of rules you want, so you can import one rule from this library, or all of them.
-
-### What if I find a mistake in a rule?
-
-Open a pull request that fixes it. See [How do I contribute?](#how-do-i-contribute) for how to check your change before you submit it.
-
-These rules come from Fabrica's own real-world experience, and yours may differ. If a rule is wrong or incomplete, we welcome the fix, and everyone who uses Fabrica Public Rules Library benefits from it.
-
-## How do I contribute?
-
-Open a pull request!
-
-Be sure to follow the [Code Rules authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/), and validate the library from its root before you push:
-
-```sh
-code-rules library check
-```
-
-Maintainers review changes in pull requests. Releases are made with [Release Planner](https://github.com/fabricahq/release-planner): an agent drafts the notes in a release pull request, and merging it tags and publishes the release. The [release policy](.release-planner/policy.md) explains how versions are chosen and what counts as a breaking change. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
-
-## License and sources
-
-The library is [MIT licensed](LICENSE.md), with copyright attributed to Fabrica Systems LLC.
-
-Some rules adapt material from third parties, and others draw on official documentation. Adapted rules carry attribution in their metadata, and [NOTICE.md](NOTICE.md) preserves the required third-party notices.
+The rules are organized into groups. Practice groups (`practices/`) apply in any language, and technology groups (`techs/`) cover one language, framework, or tool. You choose the groups that match your stack, and you can leave out any rule you disagree with.
 
 ## What rules are included?
 
@@ -114,8 +27,6 @@ Some rules adapt material from third parties, and others draw on official docume
 | [Playwright](techs/playwright/) | 2 | Writing stable browser tests with Playwright |
 | [Go](techs/go/) | 4 | Writing well-documented Go with useful errors |
 | [Goose](techs/goose/) | 1 | Organizing SQL migrations managed by goose |
-
-Practice groups (`practices/`) apply in any language. Technology groups (`techs/`) cover one language, framework, or tool.
 
 ### Browse all 124 rules
 
@@ -320,3 +231,86 @@ Practice groups (`practices/`) apply in any language. Technology groups (`techs/
 - [Keep the SQL migration directory for migration files only](techs/goose/migrations-directory-contains-only-sql.md)
 
 </details>
+
+## How does it relate to Code Rules?
+
+[Code Rules](https://github.com/fabricahq/code-rules) is the tool, and this repository is content for it:
+
+- **Code Rules** is a command-line tool that manages the rules your agents follow in a project. It imports rules from libraries, pins each library to a version, and builds the guidance your agents read.
+- **This library** is one collection of rules you can import with it. [Fabrica](https://fabricahq.com) wrote or curated these rules from its own experience and publishes them as versioned releases.
+
+It's the same relationship as a package manager and a package. You install Code Rules once, then add this library to each project, alongside any others, such as your own team's rules.
+
+## How do I use this repo?
+
+1. [Install Code Rules](https://code-rules.fabricahq.com/start-here/install/) on your local computers.
+2. [Set up your project](https://code-rules.fabricahq.com/start-here/set-up-project/) to use Code Rules.
+3. Add this library as a source. Within the project directory, run the command below. It selects every group; delete the `--groups` lines you don't need.
+
+   ```sh
+   code-rules project add library fabrica \
+     --repository https://github.com/fabricahq/public-rules.git \
+     --groups practices/code-design \
+     --groups practices/performance \
+     --groups practices/testing \
+     --groups techs/go \
+     --groups techs/goose \
+     --groups techs/javascript \
+     --groups techs/playwright \
+     --groups techs/react \
+     --groups techs/tanstack-query \
+     --groups techs/tanstack-router \
+     --groups techs/typescript \
+     --groups techs/zustand \
+     --ref v1.0.0
+   ```
+
+   To take every group, including ones added in future versions, pass a single wildcard instead: `--groups '*'` for everything, `--groups 'practices/*'` for all practice groups, or `--groups 'techs/*'` for all technology groups. Quote the wildcard so your shell doesn't expand it. See [Select groups from each source](https://code-rules.fabricahq.com/guides/select-rules/#select-groups-from-each-source).
+
+   You can also leave out individual rules from a group you import. See [Exclude a rule](https://code-rules.fabricahq.com/guides/select-rules/#exclude-a-rule).
+
+4. Download the rules and build the guidance your agent reads:
+
+   ```sh
+   code-rules project sync
+   ```
+
+5. If you haven't already, [tell your agent to read the rules](https://code-rules.fabricahq.com/start-here/set-up-project/#5-give-the-rules-to-your-agent), then commit the `.code-rules/` directory.
+
+## FAQs
+
+### What does a rule look like?
+
+A rule is a Markdown file. Its YAML frontmatter gives the rule a title, says when an agent should read it, and describes why it matters. Its body states one obligation, then gives implementation guidance, incorrect and correct examples, and the evidence a reviewer should look for. For a representative example, read [Reproduce bugs with regression tests](practices/testing/test-bug-fixes-before-fixing.md).
+
+Every rule in this library follows the Code Rules [rule rubric and template](https://code-rules.fabricahq.com/reference/rule-authoring/).
+
+### Do I have to follow every rule?
+
+No. These rules are opinions on specific technologies and practices. In some cases, you may not be using that technology, or following that practice. In some cases, you may outright disagree with the rule.
+
+Code Rules is designed to allow importing whatever collection of rules you want, so you can import one rule from this library, or all of them.
+
+### What if I find a mistake in a rule?
+
+Open a pull request that fixes it. See [How do I contribute?](#how-do-i-contribute) for how to check your change before you submit it.
+
+These rules come from Fabrica's own real-world experience, and yours may differ. If a rule is wrong or incomplete, we welcome the fix, and everyone who uses Fabrica Public Rules Library benefits from it.
+
+## How do I contribute?
+
+Open a pull request!
+
+Be sure to follow the [Code Rules authoring rubric](https://code-rules.fabricahq.com/reference/rule-authoring/), and validate the library from its root before you push:
+
+```sh
+code-rules library check
+```
+
+Maintainers review changes in pull requests. Releases are made with [Release Planner](https://github.com/fabricahq/release-planner): an agent drafts the notes in a release pull request, and merging it tags and publishes the release. The [release policy](.release-planner/policy.md) explains how versions are chosen and what counts as a breaking change. Released tags never move. For the file format, see [Rule and library format](https://code-rules.fabricahq.com/reference/rule-library-format/).
+
+## License and sources
+
+The library is [MIT licensed](LICENSE.md), with copyright attributed to Fabrica Systems LLC.
+
+Some rules adapt material from third parties, and others draw on official documentation. Adapted rules carry attribution in their metadata, and [NOTICE.md](NOTICE.md) preserves the required third-party notices.
